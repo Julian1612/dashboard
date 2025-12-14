@@ -136,7 +136,8 @@ function renderChecklist() {
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.id = task.id;
-            checkbox.className = "custom-checkbox h-4 w-4 rounded border-slate-600 focus:ring-green-500 mr-3 shrink-0 mt-1";
+            // GEÄNDERT: Checkbox nutzt nun Rot-500 für Fokus Ring
+            checkbox.className = "custom-checkbox h-4 w-4 rounded border-slate-600 focus:ring-red-500 mr-3 shrink-0 mt-1";
             checkbox.checked = task.checked;
             
             const label = document.createElement('label');
@@ -168,7 +169,8 @@ function renderChecklist() {
             // PLAY BUTTON
             if (task.duration && task.duration > 0) {
                 const playBtn = document.createElement('button');
-                playBtn.className = "task-timer-btn flex items-center gap-1 text-xs bg-slate-800 hover:bg-slate-700 text-green-500 px-2 py-1 rounded border border-slate-700";
+                // GEÄNDERT: Textfarbe des Buttons ist nun Gelb-500 (Akzent)
+                playBtn.className = "task-timer-btn flex items-center gap-1 text-xs bg-slate-800 hover:bg-slate-700 text-yellow-500 px-2 py-1 rounded border border-slate-700";
                 playBtn.title = `${task.duration} Min. Timer starten`;
                 playBtn.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -205,7 +207,8 @@ function handleTaskChange(e) {
     if(isChecked && window.triggerConfetti) {
          const rect = e.target.getBoundingClientRect();
          const particleCount = 20;
-         const colors = ['#22c55e', '#10b981', '#34d399', '#6ee7b7']; 
+         // GEÄNDERT: Konfetti-Farben auf Bauhaus-Palette (Rot/Gelb/Blau)
+         const colors = ['#ef4444', '#facc15', '#3b82f6', '#dc2626']; 
          for (let i = 0; i < particleCount; i++) {
              window.particles.push({ // particles ist in confetti.js definiert
                  x: rect.left + rect.width / 2,
@@ -301,6 +304,7 @@ function renderEditModal(data) {
         col.dataset.category = key;
         
         const header = document.createElement('h4');
+        // GEÄNDERT: Add-Button Ring ist Blau-500
         header.className = "font-semibold text-white mb-3 text-base border-b border-slate-700 pb-2 flex-none";
         header.textContent = category.title;
         col.appendChild(header);
@@ -322,10 +326,12 @@ function renderEditModal(data) {
         const addInput = document.createElement('input');
         addInput.type = "text";
         addInput.placeholder = "Neue Aufgabe...";
+        // GEÄNDERT: Add-Button Ring ist Blau-500
         addInput.className = "w-full bg-slate-700 text-sm rounded-md px-2 py-1 focus:ring-blue-500 border border-transparent focus:border-blue-500 outline-none text-slate-200";
         
         const addBtn = document.createElement('button');
         addBtn.textContent = "Add";
+        // BEIBEHALTEN: Add Button ist Blau-600 (Tool/Struktur)
         addBtn.className = "flex-none bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-1 px-3 rounded-md transition";
         
         const handleAdd = () => {
@@ -378,7 +384,8 @@ function createEditableTaskItem(task, index, categoryKey) {
     const input = document.createElement('input');
     input.type = "text";
     input.value = task.text;
-    input.className = "task-edit-input flex-grow min-w-0 bg-transparent text-sm rounded-md px-2 py-1 border-none outline-none text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-blue-500/50";
+    // GEÄNDERT: Text Input Fokus ist nun Rot-500
+    input.className = "task-edit-input flex-grow min-w-0 bg-transparent text-sm rounded-md px-2 py-1 border-none outline-none text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-red-500/50";
     input.dataset.taskId = task.id;
 
     // URL Input
@@ -386,6 +393,7 @@ function createEditableTaskItem(task, index, categoryKey) {
     urlInput.type = "text";
     urlInput.placeholder = "https://...";
     urlInput.value = task.url || "";
+    // GEÄNDERT: URL Input Farbe ist Blau-300, Fokus ist Blau-500
     urlInput.className = "task-url-input w-24 bg-slate-700/50 text-xs rounded-md px-1 py-1 border border-slate-700 outline-none text-blue-300 placeholder-slate-500 focus:ring-1 focus:ring-blue-500/50";
     urlInput.dataset.taskId = task.id;
     urlInput.title = "URL für externen Link (optional)";
@@ -397,7 +405,8 @@ function createEditableTaskItem(task, index, categoryKey) {
     timeInput.min = "1";
     timeInput.max = "180";
     if(task.duration) timeInput.value = task.duration;
-    timeInput.className = "task-duration-input w-12 text-center bg-slate-700/50 text-xs rounded-md px-1 py-1 border border-slate-700 outline-none text-green-400 placeholder-slate-500 focus:ring-1 focus:ring-green-500/50 tabular-nums";
+    // GEÄNDERT: Timer Input Farbe ist Gelb-400, Fokus ist Gelb-500
+    timeInput.className = "task-duration-input w-12 text-center bg-slate-700/50 text-xs rounded-md px-1 py-1 border border-slate-700 outline-none text-yellow-400 placeholder-slate-500 focus:ring-1 focus:ring-yellow-500/50 tabular-nums";
     timeInput.dataset.taskId = task.id;
     timeInput.title = "Dauer in Minuten für Auto-Timer";
 

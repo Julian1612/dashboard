@@ -6,7 +6,8 @@ let particles = []; // Im globalen Scope gelassen, da handleTaskChange darauf zu
 function triggerConfetti() {
     particles = [];
     const particleCount = 100;
-    const colors = ['#22c55e', '#10b981', '#34d399', '#6ee7b7'];
+    // GEÄNDERT: Konfetti-Farben auf Bauhaus-Palette (Rot/Gelb/Blau)
+    const colors = ['#ef4444', '#facc15', '#3b82f6', '#dc2626'];
     for (let i = 0; i < particleCount; i++) {
         particles.push({
             x: Math.random() * canvas.width,
