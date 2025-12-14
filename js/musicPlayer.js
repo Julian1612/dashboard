@@ -39,8 +39,7 @@ function loadNewTrack(embedUrl) {
     if (scWidget) {
         const trackUrl = extractApiUrl(embedUrl);
         if (trackUrl) {
-            // GEÄNDERT: Farbe im iFrame auf Rot (#ef4444)
-            scWidget.load(trackUrl, { auto_play: true, show_comments: false, show_user: false, show_reposts: false, color: 'ef4444' });
+            scWidget.load(trackUrl, { auto_play: true, show_comments: false, show_user: false, show_reposts: false, color: '22c55e' });
         }
     } else { 
         // Fallback, wenn SC.Widget noch nicht verfügbar ist
