@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smarte Zeiterfassung Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            color: #e5e7eb;
+        }
+        #app-container {
+            width: 1200px; /* Verbreitert für die neue Spalte */
+            margin: auto;
+        }
+        .card {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .log-table-container {
+            height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .log-table-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .action-btn {
+            padding: 6px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .edit-btn:hover { background-color: #1d4ed8; }
+        .delete-btn:hover { background-color: #b91c1c; }
+        .save-btn:hover { background-color: #15803d; }
+        .cancel-btn:hover { background-color: #4b5563; }
+        
+        .inline-edit-input {
+            background-color: #111827;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+            border-radius: 4px;
+            padding: 2px 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #timerText, #endTimeDisplay, #currentTimeDisplay, #weeklyOvertimeSummary, #currentSessionTimer {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .modal-open { overflow: hidden; }
+        
+        @keyframes pulse-border {
+            0% { border-color: #d97706; box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
+            70% { border-color: #fbbf24; box-shadow: 0 0 0 6px rgba(217, 119, 6, 0); }
+            100% { border-color: #d97706; box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+        }
+        .pause-active {
+            animation: pulse-border 2s infinite;
+            border-color: #d97706 !important;
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-6xl mx-auto">
+
+        <main id="main-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <div class="lg:col-span-1 card p-6 rounded-xl shadow-lg flex flex-col gap-5">
+                    <h2 class="text-xl font-semibold text-white border-b border-gray-600 pb-3">Einstellungen</h2>
+                    
+                    <div>
+                        <label for="startTime" class="block text-sm font-medium text-gray-300 mb-2">Arbeitsbeginn</label>
+                        <div class="flex items-center gap-2">
+                            <input type="time" id="startTime" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <button id="setStartTimeNow" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">Jetzt</button>
+                        </div>
+                    </div>
+
+                    <div id="pauseSection" class="bg-gray-800 p-4 rounded-lg border border-gray-700 transition-all duration-300">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="breakTime" class="block text-sm font-medium text-gray-300">Pause Gesamt</label>
+                            <span id="pauseStatusBadge" class="hidden px-2 py-0.5 rounded text-xs font-bold bg-yellow-600 text-white uppercase tracking-wide">Läuft</span>
+                        </div>
+                        
+                        <div class="relative mb-3">
+                            <input type="number" id="breakTime" value="0" min="0" class="w-full bg-gray-900 border border-gray-600 text-white text-lg font-bold rounded-lg p-2 pr-12 focus:ring-2 focus:ring-yellow-500 focus:outline-none transition-colors disabled:bg-gray-800 disabled:text-gray-400">
+                            <span class="absolute right-3 top-3 text-gray-400 text-sm font-medium">Min</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="startPauseBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-semibold py-2 rounded-lg transition flex items-center justify-center gap-1 shadow-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                Start
+                            </button>
+                            <button id="endPauseBtn" disabled class="bg-gray-700 text-gray-500 cursor-not-allowed text-sm font-semibold py-2 rounded-lg transition flex items-center justify-center gap-1 border border-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                Stop
+                            </button>
+                        </div>
+
+                        <div id="liveSessionContainer" class="hidden mt-3 pt-3 border-t border-gray-700 text-center">
+                            <div class="text-xs text-gray-400 mb-1">Aktuelle Pause</div>
+                            <div id="currentSessionTimer" class="text-xl font-mono text-yellow-400 font-bold">00:00:00</div>
+                        </div>
+
+                        <div id="todaysPausesContainer" class="mt-3 pt-3 border-t border-gray-700 hidden">
+                            <div class="text-xs text-gray-400 mb-1">Heute genommene Pausen:</div>
+                            <ul id="todaysPausesList" class="text-xs text-gray-300 space-y-1 font-mono">
+                                </ul>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="workDuration" class="block text-sm font-medium text-gray-300 mb-2">Soll-Arbeitszeit (Stunden)</label>
+                        <input type="time" id="workDuration" value="08:00" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+
+                    <div class="border-t border-gray-600 pt-4 mt-2 flex flex-col gap-3">
+                        <button id="openSapModal" class="w-full flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            HR-Portal Stempeln
+                        </button>
+                        <a href="https://it4you.schwarz/tcp?sysparm_domain_restore=false&sysparm_stack=no" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            IT4U
+                        </a>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 card p-6 rounded-xl shadow-lg flex flex-col items-center justify-center text-center">
+                    <h2 class="text-xl font-semibold text-white mb-4">Live-Übersicht</h2>
+                    <div class="relative w-64 h-64">
+                        <svg class="w-full h-full" viewBox="0 0 120 120">
+                            <circle class="text-gray-600" stroke-width="8" stroke="currentColor" fill="transparent" r="56" cx="60" cy="60" />
+                            <circle id="progressCircle" class="progress-ring__circle text-blue-500" stroke-width="8" stroke="currentColor" fill="transparent" r="56" cx="60" cy="60" />
+                        </svg>
+                        <div id="timerDisplay" class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
+                            <span id="timerText" class="text-3xl font-bold text-white">-</span>
+                            <span id="timerSubText" class="text-sm text-gray-400">Verbleibend</span>
+                        </div>
+                    </div>
+                    <div class="mt-6 w-full">
+                        <div class="text-lg text-gray-400">Geplantes Arbeitsende</div>
+                        <div id="endTimeDisplay" class="text-4xl font-bold text-white my-2">-</div>
+                        <div id="currentTimeDisplay" class="text-md text-gray-500">-</div>
+                        <div class="flex items-center justify-center gap-4 mt-4">
+                            <button id="logDayButton" class="w-full max-w-xs bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                                Heutigen Tag loggen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card mt-6 p-6 rounded-xl shadow-lg">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-600 pb-3">
+                    <h2 class="text-xl font-semibold text-white">Wochenprotokoll</h2>
+                    <div class="flex gap-3">
+                        <button id="openManualLogModal" class="flex items-center gap-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-semibold py-2 px-3 rounded-lg transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                            Tag manuell eintragen
+                        </button>
+                        <button id="resetWeeklyLogButton" class="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-3 rounded-lg transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="log-table-container">
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-800 sticky top-0">
+                            <tr>
+                                <th scope="col" class="px-3 py-3 w-20">Tag</th>
+                                <th scope="col" class="px-3 py-3 w-24">Datum</th>
+                                <th scope="col" class="px-3 py-3 w-20">Start</th>
+                                <th scope="col" class="px-3 py-3 w-20">Ende</th>
+                                <th scope="col" class="px-3 py-3 w-40">Pausenzeiten</th> <th scope="col" class="px-3 py-3 w-20">Summe</th>
+                                <th scope="col" class="px-3 py-3 w-20">Soll</th>
+                                <th scope="col" class="px-3 py-3 w-20">Ist</th>
+                                <th scope="col" class="px-3 py-3 w-20">Saldo</th>
+                                <th scope="col" class="px-3 py-3 w-24 text-center">Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weeklyLogTableBody">
+                            </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4 pt-3 border-t border-gray-600 flex justify-end items-center">
+                    <span class="text-md font-medium text-gray-400 mr-4">Wochen-Saldo:</span>
+                    <span id="weeklyOvertimeSummary" class="text-2xl font-bold text-gray-300 transition-colors">--:--</span>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="sapModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="card w-full h-full max-w-7xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b border-gray-600">
+                <h3 class="text-lg font-semibold text-white">HR-Portal</h3>
+                <button id="closeSapModal" class="text-gray-400 hover:text-white transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div id="sapModalStatus" class="p-4 text-center text-blue-300 bg-gray-700" style="display: none;">Lade SAP-Portal...</div>
+            <div class="flex-grow w-full h-full overflow-hidden">
+                <iframe id="sapModalFrame" class="w-full h-full border-0" src="about:blank" data-src="https://hrportalsgesprod-sapdelim-heuclnt810cfrt.launchpad.cfapps.eu20.hana.ondemand.com/sap/bc/ui2/flp/ui5appruntime.html?sap-ui-app-id=customer.TimeCorrection2Extension&scenario=LAUNCHPAD&sap-startup-params=&sap-client=810&sap-shell=FLP&sap-touch=0&sap-ui-versionedLibCss=true&sap-plugins=RTAPluginAgent#&/"></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <div id="manualLogModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="card w-full max-w-lg p-6 rounded-xl shadow-2xl">
+            <div class="flex justify-between items-center border-b border-gray-600 pb-3 mb-4">
+                <h3 class="text-lg font-semibold text-white">Manuellen Tag eintragen</h3>
+                <button id="closeManualLogModal" class="text-gray-400 hover:text-white transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form id="manualLogForm" class="flex flex-col gap-4">
+                <div>
+                    <label for="manualDate" class="block text-sm font-medium text-gray-300 mb-1">Datum</label>
+                    <input type="date" id="manualDate" required class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="manualStartTime" class="block text-sm font-medium text-gray-300 mb-1">Arbeitsbeginn</label>
+                        <input type="time" id="manualStartTime" value="08:00" required class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2">
+                    </div>
+                    <div>
+                        <label for="manualEndTime" class="block text-sm font-medium text-gray-300 mb-1">Arbeitsende</label>
+                        <input type="time" id="manualEndTime" value="16:30" required class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="manualBreakTime" class="block text-sm font-medium text-gray-300 mb-1">Pause Gesamt (Min.)</label>
+                        <input type="number" id="manualBreakTime" value="30" required min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2">
+                    </div>
+                    <div>
+                        <label for="manualTargetTime" class="block text-sm font-medium text-gray-300 mb-1">Soll-Arbeitszeit</label>
+                        <input type="time" id="manualTargetTime" value="08:00" required class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2">
+                    </div>
+                </div>
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition mt-2">
+                    Eintrag speichern
+                </button>
+            </form>
+            <div id="manualLogError" class="mt-4 text-red-400 text-sm hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        const elements = {
+            startTime: document.getElementById('startTime'),
+            setStartTimeNow: document.getElementById('setStartTimeNow'),
+            breakTime: document.getElementById('breakTime'),
+            workDuration: document.getElementById('workDuration'),
+            endTimeDisplay: document.getElementById('endTimeDisplay'),
+            currentTimeDisplay: document.getElementById('currentTimeDisplay'),
+            progressCircle: document.getElementById('progressCircle'),
+            timerText: document.getElementById('timerText'),
+            timerSubText: document.getElementById('timerSubText'),
+            logDayButton: document.getElementById('logDayButton'),
+            weeklyLogTableBody: document.getElementById('weeklyLogTableBody'),
+            
+            pauseSection: document.getElementById('pauseSection'),
+            startPauseBtn: document.getElementById('startPauseBtn'),
+            endPauseBtn: document.getElementById('endPauseBtn'),
+            liveSessionContainer: document.getElementById('liveSessionContainer'),
+            currentSessionTimer: document.getElementById('currentSessionTimer'),
+            pauseStatusBadge: document.getElementById('pauseStatusBadge'),
+            todaysPausesContainer: document.getElementById('todaysPausesContainer'),
+            todaysPausesList: document.getElementById('todaysPausesList'),
+            
+            weeklyOvertimeSummary: document.getElementById('weeklyOvertimeSummary'),
+            resetWeeklyLogButton: document.getElementById('resetWeeklyLogButton'),
+            openManualLogModal: document.getElementById('openManualLogModal'),
+            manualLogModal: document.getElementById('manualLogModal'),
+            closeManualLogModal: document.getElementById('closeManualLogModal'),
+            manualLogForm: document.getElementById('manualLogForm'),
+            manualLogError: document.getElementById('manualLogError'),
+            manualDate: document.getElementById('manualDate'),
+            manualStartTime: document.getElementById('manualStartTime'),
+            manualEndTime: document.getElementById('manualEndTime'),
+            manualBreakTime: document.getElementById('manualBreakTime'),
+            manualTargetTime: document.getElementById('manualTargetTime'),
+
+            sapModal: document.getElementById('sapModal'),
+            openSapModal: document.getElementById('openSapModal'),
+            closeSapModal: document.getElementById('closeSapModal'),
+            sapModalFrame: document.getElementById('sapModalFrame'),
+            sapModalStatus: document.getElementById('sapModalStatus'),
+        };
+
+        let endTime = null;
+        let totalWorkSeconds = 0;
+        
+        // PAUSE LOGIC
+        let pauseInterval = null;
+        let pauseStartTime = null;
+        let initialBreakValueBeforePause = 0; 
+        
+        // Temporärer Speicher für die heutigen Pausenintervalle (Strings: "HH:MM - HH:MM")
+        let todaysPauseIntervals = [];
+
+        // Helpers
+        const formatMinutesToTime = (mins) => {
+            if (isNaN(mins) || mins < 0) return "00:00";
+            const hours = Math.floor(mins / 60);
+            const minutes = mins % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        };
+
+        const formatMinutesOvertime = (mins) => {
+            if (isNaN(mins)) return "--:--";
+            const sign = mins < 0 ? "-" : "+";
+            const absMins = Math.abs(mins);
+            const hours = Math.floor(absMins / 60);
+            const minutes = absMins % 60;
+            return `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        };
+        
+        const formatTimeOnly = (dateObj) => {
+            return dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        };
+
+        // --- Core logic ---
+        function calculateAndDisplayEndTime() {
+            const startTimeValue = elements.startTime.value;
+            const breakMinutes = parseInt(elements.breakTime.value, 10) || 0;
+            const [workHours, workMinutes] = elements.workDuration.value.split(':').map(Number);
+            totalWorkSeconds = (workHours * 3600) + (workMinutes * 60);
+
+            if (startTimeValue && totalWorkSeconds > 0) {
+                const [startHours, startMinutes] = startTimeValue.split(':').map(Number);
+                const startDate = new Date();
+                startDate.setHours(startHours, startMinutes, 0, 0);
+                endTime = new Date(startDate.getTime() + totalWorkSeconds * 1000 + breakMinutes * 60 * 1000);
+                const endHours = endTime.getHours().toString().padStart(2, '0');
+                const endMinutes = endTime.getMinutes().toString().padStart(2, '0');
+                elements.endTimeDisplay.textContent = `${endHours}:${endMinutes} Uhr`;
+            } else {
+                endTime = null;
+                elements.endTimeDisplay.textContent = '-';
+            }
+        }
+
+        function updateClockAndTimer() {
+            const now = new Date();
+            elements.currentTimeDisplay.textContent = `Aktuelle Uhrzeit: ${now.toLocaleTimeString('de-DE')}`;
+            
+            if (!endTime || !elements.startTime.value) {
+                elements.timerText.textContent = '--:--:--';
+                elements.timerSubText.textContent = 'Warte auf Startzeit';
+                updateProgressCircle(0);
+                return;
+            }
+
+            const diffSeconds = Math.round((endTime.getTime() - now.getTime()) / 1000);
+
+            if (diffSeconds > 0) {
+                const hours = Math.floor(diffSeconds / 3600);
+                const minutes = Math.floor((diffSeconds % 3600) / 60);
+                const seconds = diffSeconds % 60;
+                elements.timerText.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                elements.timerSubText.textContent = 'Verbleibend';
+                
+                const [startHours, startMinutes] = elements.startTime.value.split(':').map(Number);
+                const startTimeToday = new Date();
+                startTimeToday.setHours(startHours, startMinutes, 0, 0);
+                const currentBreakVal = parseInt(elements.breakTime.value, 10) || 0;
+                const elapsedSeconds = (now.getTime() - startTimeToday.getTime()) / 1000 - (currentBreakVal * 60);
+                const progress = Math.max(0, Math.min(1, elapsedSeconds / totalWorkSeconds));
+                updateProgressCircle(progress);
+                elements.progressCircle.classList.remove('text-red-500');
+                elements.progressCircle.classList.add('text-blue-500');
+            } else {
+                const overtimeSeconds = Math.abs(diffSeconds);
+                const hours = Math.floor(overtimeSeconds / 3600);
+                const minutes = Math.floor((overtimeSeconds % 3600) / 60);
+                const seconds = overtimeSeconds % 60;
+                elements.timerText.textContent = `+ ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                elements.timerSubText.textContent = 'Überstunden';
+                updateProgressCircle(1);
+                elements.progressCircle.classList.remove('text-blue-500');
+                elements.progressCircle.classList.add('text-red-500');
+            }
+        }
+
+        function updateProgressCircle(progress) {
+            const radius = 56;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - progress * circumference;
+            elements.progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+            elements.progressCircle.style.strokeDashoffset = offset;
+        }
+
+        // --- PAUSE FUNKTIONEN ---
+        function startPause() {
+            initialBreakValueBeforePause = parseInt(elements.breakTime.value, 10);
+            if (isNaN(initialBreakValueBeforePause)) initialBreakValueBeforePause = 0;
+
+            pauseStartTime = new Date();
+
+            elements.startPauseBtn.style.display = 'none';
+            elements.endPauseBtn.disabled = false;
+            elements.endPauseBtn.classList.remove('bg-gray-700', 'text-gray-500', 'cursor-not-allowed', 'border-gray-600');
+            elements.endPauseBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'text-white', 'cursor-pointer', 'border-transparent', 'w-full');
+            elements.endPauseBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
+                Pause Beenden
+            `;
+            elements.startPauseBtn.parentElement.classList.remove('grid', 'grid-cols-2');
+            
+            elements.breakTime.disabled = true;
+            elements.pauseSection.classList.add('pause-active');
+            elements.liveSessionContainer.classList.remove('hidden');
+            elements.pauseStatusBadge.classList.remove('hidden');
+
+            pauseInterval = setInterval(() => {
+                const now = new Date();
+                const diffMs = now - pauseStartTime;
+                
+                const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+                elements.currentSessionTimer.textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                const currentSessionMinutes = Math.floor(diffMs / 60000);
+                const newTotal = initialBreakValueBeforePause + currentSessionMinutes;
+                
+                if (parseInt(elements.breakTime.value) !== newTotal) {
+                    elements.breakTime.value = newTotal;
+                    calculateAndDisplayEndTime(); 
+                }
+            }, 1000);
+        }
+
+        function endPause() {
+            if (!pauseStartTime) return;
+
+            clearInterval(pauseInterval);
+            const now = new Date();
+            const diffMs = now - pauseStartTime;
+            const sessionMinutes = Math.round(diffMs / 60000); 
+            
+            // Pausenzeit-String generieren
+            const startStr = formatTimeOnly(pauseStartTime);
+            const endStr = formatTimeOnly(now);
+            const pauseIntervalStr = `${startStr} - ${endStr}`;
+            
+            // Zur Liste hinzufügen
+            todaysPauseIntervals.push(pauseIntervalStr);
+            renderTodaysPauses();
+
+            const finalTotal = initialBreakValueBeforePause + sessionMinutes;
+            elements.breakTime.value = finalTotal;
+            calculateAndDisplayEndTime();
+
+            // UI Reset
+            elements.startPauseBtn.style.display = 'flex';
+            elements.startPauseBtn.parentElement.classList.add('grid', 'grid-cols-2');
+
+            elements.endPauseBtn.disabled = true;
+            elements.endPauseBtn.classList.add('bg-gray-700', 'text-gray-500', 'cursor-not-allowed', 'border-gray-600');
+            elements.endPauseBtn.classList.remove('bg-red-600', 'hover:bg-red-700', 'text-white', 'cursor-pointer', 'border-transparent', 'w-full');
+            elements.endPauseBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Stop
+            `;
+
+            elements.breakTime.disabled = false;
+            elements.pauseSection.classList.remove('pause-active');
+            elements.liveSessionContainer.classList.add('hidden');
+            elements.pauseStatusBadge.classList.add('hidden');
+            elements.currentSessionTimer.textContent = "00:00:00";
+
+            pauseStartTime = null;
+        }
+
+        function renderTodaysPauses() {
+            if (todaysPauseIntervals.length > 0) {
+                elements.todaysPausesContainer.classList.remove('hidden');
+                elements.todaysPausesList.innerHTML = todaysPauseIntervals
+                    .map(interval => `<li>${interval} Uhr</li>`)
+                    .join('');
+            } else {
+                elements.todaysPausesContainer.classList.add('hidden');
+                elements.todaysPausesList.innerHTML = '';
+            }
+        }
+        
+        // --- Speicher & Logik ---
+        function getAllLogs() {
+            return JSON.parse(localStorage.getItem('workLogs')) || [];
+        }
+
+        function saveAllLogs(logs) {
+            localStorage.setItem('workLogs', JSON.stringify(logs));
+        }
+
+        function calculateWeeklyOvertime() {
+            const { startOfWeek, endOfWeek } = getWeekDateRange(new Date());
+            const allLogs = getAllLogs();
+            const weeklyLogs = allLogs.filter(log => log.date >= startOfWeek && log.date <= endOfWeek);
+            const totalOvertimeMinutes = weeklyLogs.reduce((sum, log) => sum + (log.overtimeMinutes || 0), 0);
+            renderWeeklySummary(totalOvertimeMinutes);
+            return totalOvertimeMinutes;
+        }
+
+        function renderWeeklySummary(totalMins) {
+            const summaryElement = elements.weeklyOvertimeSummary;
+            if (!summaryElement) return;
+            summaryElement.textContent = formatMinutesOvertime(totalMins);
+            summaryElement.classList.remove('text-red-400', 'text-green-400', 'text-gray-300');
+            if (totalMins > 0) summaryElement.classList.add('text-green-400');
+            else if (totalMins < 0) summaryElement.classList.add('text-red-400');
+            else summaryElement.classList.add('text-gray-300');
+        }
+
+        function resetWeeklyLog() {
+            if (confirm("Soll das Wochenprotokoll wirklich ZURÜCKGESETZT werden?")) {
+                const { startOfWeek, endOfWeek } = getWeekDateRange(new Date());
+                let allLogs = getAllLogs();
+                const logsToKeep = allLogs.filter(log => log.date < startOfWeek || log.date > endOfWeek);
+                saveAllLogs(logsToKeep);
+                loadWeeklyLogs();
+            }
+        }
+
+        // --- Speichern ---
+        function saveLog() {
+            if (!elements.startTime.value) return;
+
+            const now = new Date();
+            const [workHours, workMinutes] = elements.workDuration.value.split(':').map(Number);
+            const targetMinutes = workHours * 60 + workMinutes;
+            const [startHours, startMinutesNum] = elements.startTime.value.split(':').map(Number);
+            const startTimeDate = new Date();
+            startTimeDate.setHours(startHours, startMinutesNum, 0, 0);
+            
+            const breakMinutes = parseInt(elements.breakTime.value, 10) || 0;
+            const workedMinutes = Math.round((now - startTimeDate) / 60000) - breakMinutes;
+
+            // Pausenliste zu String zusammenführen
+            const pauseLogsString = todaysPauseIntervals.join(', ');
+
+            const logEntry = {
+                date: now.toISOString().split('T')[0],
+                startTime: elements.startTime.value,
+                endTime: now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+                breakMinutes,
+                // NEU: Pausen-Logs speichern
+                pauseLogs: pauseLogsString,
+                targetMinutes,
+                workedMinutes,
+                overtimeMinutes: workedMinutes - targetMinutes,
+                createdAt: new Date().toISOString()
+            };
+
+            const existingLogs = getAllLogs();
+            existingLogs.push(logEntry);
+            saveAllLogs(existingLogs);
+            
+            // Reset daily pause tracker
+            todaysPauseIntervals = [];
+            renderTodaysPauses();
+            
+            loadWeeklyLogs();
+        }
+        
+        function saveManualLog(event) {
+            event.preventDefault();
+            const date = elements.manualDate.value;
+            const startTime = elements.manualStartTime.value;
+            const endTime = elements.manualEndTime.value;
+            const breakMinutes = parseInt(elements.manualBreakTime.value, 10);
+            const targetTime = elements.manualTargetTime.value;
+
+            elements.manualLogError.classList.add('hidden');
+            if (!date || !startTime || !endTime || isNaN(breakMinutes) || !targetTime) {
+                elements.manualLogError.textContent = 'Bitte füllen Sie alle Felder aus.';
+                elements.manualLogError.classList.remove('hidden');
+                return;
+            }
+
+            const [targetH, targetM] = targetTime.split(':').map(Number);
+            const targetMinutes = targetH * 60 + targetM;
+            const [startH, startM] = startTime.split(':').map(Number);
+            const startDate = new Date(date);
+            startDate.setHours(startH, startM, 0, 0);
+            const [endH, endM] = endTime.split(':').map(Number);
+            const endDate = new Date(date);
+            endDate.setHours(endH, endM, 0, 0);
+            if (endDate.getTime() <= startDate.getTime()) endDate.setDate(endDate.getDate() + 1);
+            
+            const workedMinutes = Math.round((endDate.getTime() - startDate.getTime()) / 60000) - breakMinutes;
+            const overtimeMinutes = workedMinutes - targetMinutes;
+            
+            if (workedMinutes < 0) {
+                elements.manualLogError.textContent = 'Fehler: Negative Arbeitszeit.';
+                elements.manualLogError.classList.remove('hidden');
+                return;
+            }
+            
+            const logEntry = {
+                date: date,
+                startTime: startTime,
+                endTime: endTime,
+                breakMinutes: breakMinutes,
+                pauseLogs: "", // Manuell eingetragen -> Keine Detailzeiten
+                targetMinutes: targetMinutes,
+                workedMinutes: workedMinutes,
+                overtimeMinutes: overtimeMinutes,
+                createdAt: new Date().toISOString()
+            };
+
+            const existingLogs = getAllLogs();
+            existingLogs.push(logEntry);
+            saveAllLogs(existingLogs);
+            closeManualLogModal();
+            loadWeeklyLogs();
+        }
+
+        function saveEditedRow(idToSave) {
+            const allLogs = getAllLogs();
+            const logIndex = allLogs.findIndex(log => log.createdAt === idToSave);
+            if (logIndex === -1) return;
+
+            const row = document.querySelector(`tr[data-id="${idToSave}"]`);
+            if (!row) return;
+            
+            const newStartTime = row.querySelector('[data-field="startTime"] input').value;
+            const newEndTime = row.querySelector('[data-field="endTime"] input').value;
+            const newBreakMinutes = parseInt(row.querySelector('[data-field="breakMinutes"] input').value, 10);
+            const newPauseLogs = row.querySelector('[data-field="pauseLogs"] input').value; // Neuer Text-Input
+            const newTargetTime = row.querySelector('[data-field="targetMinutes"] input').value;
+            
+            const [targetH, targetM] = newTargetTime.split(':').map(Number);
+            const newTargetMinutes = targetH * 60 + targetM;
+            const logDateStr = allLogs[logIndex].date; 
+            const [startH, startM] = newStartTime.split(':').map(Number);
+            const startDate = new Date(logDateStr);
+            startDate.setHours(startH, startM, 0, 0);
+            const [endH, endM] = newEndTime.split(':').map(Number);
+            const endDate = new Date(logDateStr);
+            endDate.setHours(endH, endM, 0, 0);
+            if (endDate.getTime() <= startDate.getTime()) endDate.setDate(endDate.getDate() + 1);
+            
+            const newWorkedMinutes = Math.round((endDate.getTime() - startDate.getTime()) / 60000) - newBreakMinutes;
+            const newOvertimeMinutes = newWorkedMinutes - newTargetMinutes;
+
+            allLogs[logIndex] = {
+                ...allLogs[logIndex],
+                startTime: newStartTime,
+                endTime: newEndTime,
+                breakMinutes: newBreakMinutes,
+                pauseLogs: newPauseLogs, // Update Pause Logs
+                targetMinutes: newTargetMinutes,
+                workedMinutes: newWorkedMinutes,
+                overtimeMinutes: newOvertimeMinutes,
+            };
+            
+            saveAllLogs(allLogs);
+            loadWeeklyLogs();
+        }
+
+        function deleteLog(idToDelete) {
+            let allLogs = getAllLogs();
+            allLogs = allLogs.filter(log => log.createdAt !== idToDelete);
+            saveAllLogs(allLogs);
+            loadWeeklyLogs();
+        }
+        
+        function startEditMode(idToEdit) {
+            loadWeeklyLogs(); 
+            const log = getAllLogs().find(log => log.createdAt === idToEdit);
+            if (!log) return;
+            const row = document.querySelector(`tr[data-id="${idToEdit}"]`);
+            if (!row) return;
+
+            row.querySelector('[data-field="startTime"]').innerHTML = `<input type="time" value="${log.startTime}" class="inline-edit-input">`;
+            row.querySelector('[data-field="endTime"]').innerHTML = `<input type="time" value="${log.endTime}" class="inline-edit-input">`;
+            row.querySelector('[data-field="breakMinutes"]').innerHTML = `<input type="number" value="${log.breakMinutes}" class="inline-edit-input">`;
+            // Editierbares Textfeld für Pausenzeiten
+            row.querySelector('[data-field="pauseLogs"]').innerHTML = `<input type="text" value="${log.pauseLogs || ''}" class="inline-edit-input text-xs" placeholder="12:00-12:30">`;
+            row.querySelector('[data-field="targetMinutes"]').innerHTML = `<input type="time" value="${formatMinutesToTime(log.targetMinutes)}" class="inline-edit-input">`;
+            
+            row.querySelector('[data-field="actions"]').innerHTML = `
+                <div class="flex items-center justify-center gap-2">
+                    <button class="action-btn save-btn bg-green-600" data-id="${log.createdAt}" title="Speichern">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </button>
+                    <button class="action-btn cancel-btn bg-gray-600" data-id="${log.createdAt}" title="Abbrechen">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>`;
+        }
+
+        function loadWeeklyLogs() {
+            const { startOfWeek, endOfWeek } = getWeekDateRange(new Date());
+            const allLogs = getAllLogs();
+            const weeklyLogs = allLogs.filter(log => log.date >= startOfWeek && log.date <= endOfWeek);
+            weeklyLogs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            
+            renderWeeklyLogTable(weeklyLogs);
+            calculateWeeklyOvertime();
+        }
+        
+        function renderWeeklyLogTable(logs) {
+            elements.weeklyLogTableBody.innerHTML = '';
+            if (logs.length === 0) {
+                elements.weeklyLogTableBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">Noch keine Einträge für diese Woche vorhanden.</td></tr>`;
+                return;
+            }
+
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                row.className = "bg-gray-800 border-b border-gray-700 hover:bg-gray-600";
+                row.dataset.id = log.createdAt;
+                const logDate = new Date(log.date + 'T00:00:00');
+                const dayName = logDate.toLocaleDateString('de-DE', { weekday: 'short' });
+                const formattedDate = logDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                const formatMinutes = (mins) => {
+                    if (isNaN(mins)) return "-";
+                    const sign = mins < 0 ? "-" : "";
+                    const absMins = Math.abs(mins);
+                    const hours = Math.floor(absMins / 60);
+                    const minutes = absMins % 60;
+                    return `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                };
+
+                row.innerHTML = `
+                    <td class="px-3 py-3 font-medium text-white">${dayName}</td>
+                    <td class="px-3 py-3">${formattedDate}</td>
+                    <td class="px-3 py-3" data-field="startTime">${log.startTime}</td>
+                    <td class="px-3 py-3" data-field="endTime">${log.endTime}</td>
+                    <td class="px-3 py-3 text-xs text-gray-400 break-words" data-field="pauseLogs">${log.pauseLogs || '-'}</td>
+                    <td class="px-3 py-3" data-field="breakMinutes">${log.breakMinutes} min</td>
+                    <td class="px-3 py-3" data-field="targetMinutes">${formatMinutes(log.targetMinutes)}</td>
+                    <td class="px-3 py-3" data-field="workedMinutes">${formatMinutes(log.workedMinutes)}</td>
+                    <td class="px-3 py-3 font-bold ${log.overtimeMinutes < 0 ? 'text-red-400' : 'text-green-400'}" data-field="overtimeMinutes">${formatMinutes(log.overtimeMinutes)}</td>
+                    <td class="px-3 py-3 text-center" data-field="actions">
+                        <div class="flex items-center justify-center gap-2">
+                            <button class="action-btn edit-btn bg-blue-600" data-id="${log.createdAt}" title="Bearbeiten">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z" /></svg>
+                            </button>
+                            <button class="action-btn delete-btn bg-red-600" data-id="${log.createdAt}" title="Löschen">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                elements.weeklyLogTableBody.appendChild(row);
+            });
+        }
+        
+        function getWeekDateRange(date) {
+            const currentDay = date.getDay();
+            const diffToMonday = date.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+            const startOfWeek = new Date(new Date(date).setDate(diffToMonday));
+            startOfWeek.setHours(0, 0, 0, 0); 
+            const endOfWeek = new Date(new Date(startOfWeek).setDate(startOfWeek.getDate() + 6));
+            endOfWeek.setHours(23, 59, 59, 999); 
+            const formatDate = (d) => d.toISOString().split('T')[0];
+            return { startOfWeek: formatDate(startOfWeek), endOfWeek: formatDate(endOfWeek) };
+        }
+
+        function openAndRefreshSapModal() {
+            const frame = elements.sapModalFrame;
+            const status = elements.sapModalStatus;
+            const sapUrl = frame.dataset.src; 
+            elements.sapModal.classList.remove('hidden');
+            document.body.classList.add('modal-open'); 
+            status.style.display = 'block';
+            frame.src = sapUrl;
+            frame.onload = () => { status.style.display = 'none'; };
+            frame.onerror = () => { status.textContent = 'Fehler beim Laden'; status.style.backgroundColor = '#b91c1c'; };
+        }
+
+        function closeSapModal() {
+            elements.sapModal.classList.add('hidden');
+            document.body.classList.remove('modal-open'); 
+            elements.sapModalFrame.src = 'about:blank'; 
+            elements.sapModalStatus.style.display = 'none';
+        }
+        
+        function openManualLogModal() {
+            elements.manualLogModal.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+            elements.manualLogError.classList.add('hidden');
+            const today = new Date().toISOString().split('T')[0];
+            elements.manualDate.value = today;
+            elements.manualStartTime.value = '08:00';
+            elements.manualEndTime.value = '16:30';
+            elements.manualBreakTime.value = '30';
+            elements.manualTargetTime.value = '08:00';
+        }
+
+        function closeManualLogModal() {
+            elements.manualLogModal.classList.add('hidden');
+            document.body.classList.remove('modal-open');
+            elements.manualLogForm.reset();
+        }
+
+        // --- Event Listener Setup ---
+        function setupEventListeners() {
+            elements.setStartTimeNow.addEventListener('click', () => {
+                const now = new Date();
+                elements.startTime.value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                calculateAndDisplayEndTime();
+            });
+
+            elements.startPauseBtn.addEventListener('click', startPause);
+            elements.endPauseBtn.addEventListener('click', endPause);
+
+            ['change', 'input'].forEach(evt => {
+                elements.startTime.addEventListener(evt, calculateAndDisplayEndTime);
+                elements.breakTime.addEventListener(evt, calculateAndDisplayEndTime);
+                elements.workDuration.addEventListener(evt, calculateAndDisplayEndTime);
+            });
+
+            elements.logDayButton.addEventListener('click', saveLog);
+
+            elements.weeklyLogTableBody.addEventListener('click', (event) => {
+                const button = event.target.closest('button');
+                if (!button) return;
+                const logId = button.dataset.id;
+                if (!logId) return;
+
+                if (button.classList.contains('edit-btn')) startEditMode(logId);
+                else if (button.classList.contains('delete-btn')) deleteLog(logId);
+                else if (button.classList.contains('save-btn')) saveEditedRow(logId);
+                else if (button.classList.contains('cancel-btn')) loadWeeklyLogs();
+            });
+
+            elements.openSapModal.addEventListener('click', openAndRefreshSapModal);
+            elements.closeSapModal.addEventListener('click', closeSapModal);
+            elements.sapModal.addEventListener('click', (event) => { if (event.target === elements.sapModal) closeSapModal(); });
+            
+            elements.resetWeeklyLogButton.addEventListener('click', resetWeeklyLog);
+            elements.openManualLogModal.addEventListener('click', openManualLogModal);
+            elements.closeManualLogModal.addEventListener('click', closeManualLogModal);
+            elements.manualLogForm.addEventListener('submit', saveManualLog);
+            elements.manualLogModal.addEventListener('click', (event) => { if (event.target === elements.manualLogModal) closeManualLogModal(); });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            calculateAndDisplayEndTime();
+            loadWeeklyLogs();
+            setInterval(updateClockAndTimer, 1000);
+            updateProgressCircle(0);
+        });
+    </script>
+</body>
+</html>
