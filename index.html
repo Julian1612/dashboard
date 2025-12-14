@@ -129,13 +129,14 @@
             
             <div class="card p-4 flex flex-col h-72">
                 <div class="flex-none flex justify-between items-center mb-2 px-2">
-                    <h2 class="text-lg font-bold text-white">Focus FM</h2>
-                    <div class="flex space-x-1 p-1 bg-slate-900 rounded-md">
-                        <button class="player-btn text-xs py-1 px-2 rounded active" data-src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1107084022&color=%2322c55e&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true">Brown Noise</button>
-                        <button class="player-btn text-xs py-1 px-2 rounded" data-src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1786226742&color=%2322c55e&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true">Piano Focus</button>
-                        <button class="player-btn text-xs py-1 px-2 rounded" data-src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1561633429&color=%2322c55e&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true">Binaural Beats</button>
-                        <button class="player-btn text-xs py-1 px-2 rounded" data-src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/1234609288&color=%2322c55e&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true">Lofi</button>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-lg font-bold text-white">Focus FM</h2>
+                        <button id="edit-music-btn" title="Musik bearbeiten" class="text-blue-500 hover:text-blue-400 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                        </button>
                     </div>
+                    <div id="sc-player-buttons" class="flex space-x-1 p-1 bg-slate-900 rounded-md">
+                        </div>
                 </div>
                 <div class="flex-grow flex items-center justify-center">
                     <iframe id="soundcloud-player" width="100%" height="100%" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1107084022&color=%2322c55e&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true"></iframe>
@@ -221,6 +222,26 @@
         </div>
     </div>
 
+    <div id="sc-edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 transition-opacity duration-300 opacity-0">
+        <div class="card w-[95vw] max-w-2xl h-[90vh] p-6 rounded-xl text-left transform scale-95 transition-transform duration-300 flex flex-col bg-slate-800 border-slate-700 shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-600 pb-3 flex-none">Focus FM bearbeiten</h3>
+            <p class="text-xs text-slate-400 mb-4 flex-none">Füge SoundCloud-Embed-URLs hinzu oder entferne sie. Der <b>Name</b> erscheint auf dem Button.</p>
+            
+            <div id="sc-edit-list-container" class="flex-grow overflow-y-auto custom-scroll min-h-0 space-y-3 pr-1">
+                </div>
+
+            <div class="flex-none mt-6 pt-4 border-t border-slate-600 flex space-x-2">
+                 <input type="text" id="new-sc-name-input" placeholder="Name des Tracks/Playlist" class="w-1/3 bg-slate-700 text-sm rounded-md px-2 py-1 focus:ring-blue-500 border border-transparent focus:border-blue-500 outline-none text-slate-200" />
+                 <input type="text" id="new-sc-url-input" placeholder="SoundCloud Embed URL (Komplett)" class="flex-grow bg-slate-700 text-sm rounded-md px-2 py-1 focus:ring-blue-500 border border-transparent focus:border-blue-500 outline-none text-slate-200" />
+                 <button id="add-sc-track-btn" class="flex-none bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-1 px-3 rounded-md transition">Hinzufügen</button>
+            </div>
+            
+            <div class="flex-none mt-4 pt-4 border-t border-slate-600 flex justify-end space-x-3">
+                <button id="cancel-sc-edit-btn" class="py-2 px-6 bg-slate-600 hover:bg-slate-700 rounded-md text-white font-semibold transition">Abbrechen</button>
+                <button id="save-sc-edit-btn" class="py-2 px-6 bg-green-600 hover:bg-green-700 rounded-md text-white font-semibold transition shadow-lg shadow-green-900/50">Speichern</button>
+            </div>
+        </div>
+    </div>
     <script>
         // --- UTILITY: SAFE UUID ---
         function generateUUID() {
@@ -260,6 +281,7 @@
         let timerState = 'stopped';
         let initialDuration = 45 * 60;
         let activeTaskTimerId = null; // Stores ID of the task that started the current timer
+        let scWidget; // Defined here for global access
 
         // --- 90 MINUTE CYCLE TRACKER ---
         const cycleProgressBar = document.getElementById('cycle-progress-bar');
@@ -491,6 +513,214 @@
         });
 
         resetTimer();
+
+
+        // --- SOUNDCLOUD TRACK MANAGER SCRIPT ---
+        const scPlayerButtons = document.getElementById('sc-player-buttons');
+        const editMusicBtn = document.getElementById('edit-music-btn');
+        const scEditModal = document.getElementById('sc-edit-modal');
+        const scEditListContainer = document.getElementById('sc-edit-list-container');
+        const saveScEditBtn = document.getElementById('save-sc-edit-btn');
+        const cancelScEditBtn = document.getElementById('cancel-sc-edit-btn');
+        const addScTrackBtn = document.getElementById('add-sc-track-btn');
+        const newScNameInput = document.getElementById('new-sc-name-input');
+        const newScUrlInput = document.getElementById('new-sc-url-input');
+
+        const SC_TRACKS_STORAGE_KEY = 'focusDaySCTracks_v1';
+        
+        // Use the hardcoded tracks as default
+        const DEFAULT_SC_TRACKS = [
+            { id: 'sc-1', name: "Brown Noise", url: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1107084022&color=%2322c55e&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true" },
+            { id: 'sc-2', name: "Piano Focus", url: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1786226742&color=%2322c55e&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true" },
+            { id: 'sc-3', name: "Binaural Beats", url: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1561633429&color=%2322c55e&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true" },
+            { id: 'sc-4', name: "Lofi", url: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/1234609288&color=%2322c55e&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true" },
+        ];
+        let currentSCTracks = [];
+
+        // Utility to check if a URL is a valid SoundCloud embed URL
+        function isValidSoundCloudEmbed(url) {
+            // Very basic check, mainly for the user to paste the full embed link
+            return url.startsWith('https://w.soundcloud.com/player/?url=');
+        }
+
+        function loadSCTracks() {
+            const savedTracks = localStorage.getItem(SC_TRACKS_STORAGE_KEY);
+            try {
+                const tracks = savedTracks ? JSON.parse(savedTracks) : DEFAULT_SC_TRACKS;
+                currentSCTracks = tracks.map(track => ({
+                    ...track,
+                    id: track.id || generateUUID(), // Ensure all have an ID
+                }));
+            } catch(e) {
+                console.error("Error loading SoundCloud tracks from local storage:", e);
+                currentSCTracks = DEFAULT_SC_TRACKS;
+            }
+        }
+
+        function saveSCTracks() {
+            localStorage.setItem(SC_TRACKS_STORAGE_KEY, JSON.stringify(currentSCTracks));
+        }
+
+        function renderSCButtons() {
+            scPlayerButtons.innerHTML = '';
+            
+            currentSCTracks.forEach((track, index) => {
+                const button = document.createElement('button');
+                // The first track is active on load
+                button.className = `player-btn text-xs py-1 px-2 rounded ${index === 0 ? 'active' : ''}`;
+                button.textContent = track.name;
+                button.dataset.src = track.url;
+                button.dataset.trackId = track.id; 
+                
+                button.addEventListener('click', (e) => {
+                    document.querySelectorAll('.player-btn').forEach(btn => btn.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    loadNewTrack(e.currentTarget.dataset.src);
+                });
+
+                scPlayerButtons.appendChild(button);
+            });
+            
+            // Set the initial player iframe source to the first track
+            if (currentSCTracks.length > 0) {
+                soundcloudPlayerIframe.src = currentSCTracks[0].url;
+            }
+        }
+        
+        function openSCEditModal() {
+            // Clone data to allow for cancellation
+            scEditModal.currentData = JSON.parse(JSON.stringify(currentSCTracks));
+            renderSCEditList(scEditModal.currentData);
+
+            scEditModal.classList.remove('hidden');
+            scEditModal.style.opacity = '0';
+            scEditModal.querySelector('.card').style.transform = 'scale(0.95)';
+            setTimeout(() => { 
+                scEditModal.style.opacity = '1';
+                scEditModal.querySelector('.card').style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        function closeSCEditModal() {
+            scEditModal.style.opacity = '0';
+            scEditModal.querySelector('.card').style.transform = 'scale(0.95)';
+            setTimeout(() => { scEditModal.classList.add('hidden'); }, 300);
+            newScNameInput.value = "";
+            newScUrlInput.value = "";
+        }
+
+        function renderSCEditList(data) {
+            scEditListContainer.innerHTML = '';
+            
+            data.forEach((track, index) => {
+                const li = document.createElement('div');
+                li.className = "flex items-center group bg-slate-800/80 p-2 rounded border border-transparent hover:border-slate-600 transition gap-2";
+                li.dataset.index = index;
+                li.dataset.trackId = track.id;
+
+                // Name Input
+                const nameInput = document.createElement('input');
+                nameInput.type = "text";
+                nameInput.value = track.name;
+                nameInput.className = "sc-name-input flex-none w-1/4 bg-transparent text-sm rounded-md px-2 py-1 border-none outline-none text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-blue-500/50";
+                nameInput.dataset.trackId = track.id;
+                nameInput.title = "Button Name";
+
+                // URL Input
+                const urlInput = document.createElement('input');
+                urlInput.type = "text";
+                urlInput.value = track.url || "";
+                urlInput.className = "sc-url-input flex-grow bg-transparent text-xs rounded-md px-2 py-1 border-none outline-none text-blue-300 placeholder-slate-500 focus:ring-1 focus:ring-blue-500/50";
+                urlInput.dataset.trackId = track.id;
+                urlInput.title = "SoundCloud Embed URL (Muss komplett sein)";
+
+                // Delete Btn
+                const delBtn = document.createElement('button');
+                delBtn.className = "action-icon-btn delete-task-btn flex-none";
+                delBtn.title = "Löschen";
+                delBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
+                
+                delBtn.addEventListener('click', () => {
+                    syncSCEditModalState(); 
+                    scEditModal.currentData.splice(index, 1);
+                    renderSCEditList(scEditModal.currentData);
+                });
+
+                li.appendChild(nameInput);
+                li.appendChild(urlInput);
+                li.appendChild(delBtn);
+
+                scEditListContainer.appendChild(li);
+            });
+        }
+
+        function syncSCEditModalState() {
+             const temp = scEditModal.currentData;
+             scEditListContainer.querySelectorAll('.sc-name-input').forEach(input => {
+                const trackId = input.dataset.trackId;
+                const track = temp.find(t => t.id === trackId);
+                if (track) track.name = input.value.trim();
+             });
+             scEditListContainer.querySelectorAll('.sc-url-input').forEach(input => {
+                const trackId = input.dataset.trackId;
+                const track = temp.find(t => t.id === trackId);
+                if (track) track.url = input.value.trim();
+             });
+        }
+        
+        function addSCTrack() {
+            const name = newScNameInput.value.trim();
+            const url = newScUrlInput.value.trim();
+            
+            if (name === "" || url === "") {
+                alert("Bitte einen Namen und die vollständige SoundCloud Embed URL eingeben.");
+                return;
+            }
+
+            if (!isValidSoundCloudEmbed(url)) {
+                 alert("Die URL scheint keine vollständige SoundCloud Embed URL zu sein. Bitte überprüfe, ob es der komplette Embed-Link von SoundCloud ist.");
+                 return;
+            }
+            
+            syncSCEditModalState(); 
+            const newTrack = { id: generateUUID(), name: name, url: url };
+            scEditModal.currentData.push(newTrack);
+            renderSCEditList(scEditModal.currentData);
+            
+            newScNameInput.value = "";
+            newScUrlInput.value = "";
+            newScNameInput.focus();
+        }
+
+        function saveEditedSCTracks() {
+            syncSCEditModalState();
+            
+            const validTracks = scEditModal.currentData.filter(track => 
+                track.name !== "" && isValidSoundCloudEmbed(track.url)
+            );
+
+            if (validTracks.length === 0) {
+                alert("Es muss mindestens ein gültiger SoundCloud-Track mit Namen und Embed-URL vorhanden sein.");
+                return;
+            }
+
+            currentSCTracks = validTracks;
+            saveSCTracks();
+            renderSCButtons();
+            
+            // Re-initialize SC widget to ensure it loads the first track/playlist correctly
+            initializeSCWidget();
+
+            closeSCEditModal();
+        }
+
+        editMusicBtn.addEventListener('click', openSCEditModal);
+        cancelScEditBtn.addEventListener('click', closeSCEditModal);
+        saveScEditBtn.addEventListener('click', saveEditedSCTracks);
+        addScTrackBtn.addEventListener('click', addSCTrack);
+        newScUrlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addSCTrack(); });
+        newScNameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') newScUrlInput.focus(); });
+        // --- END SOUNDCLOUD TRACK MANAGER SCRIPT ---
 
 
         // --- CHECKLIST & VISUAL FEEDBACK SCRIPT (V15 + Link Feature) ---
@@ -1031,12 +1261,12 @@
         resizeCanvas();
         animateConfetti(); 
 
-        const playerBtns = document.querySelectorAll('.player-btn');
+        // const playerBtns = document.querySelectorAll('.player-btn'); // REMOVED: Now dynamic
         const soundcloudPlayerIframe = document.getElementById('soundcloud-player');
         const scNextBtn = document.getElementById('sc-next');
         const scPrevBtn = document.getElementById('sc-prev');
-        let scWidget;
-        
+        // let scWidget; // Moved to top
+
         function extractApiUrl(embedUrl) {
             try { return decodeURIComponent(new URL(embedUrl).searchParams.get('url')); } catch (e) { return null; }
         }
@@ -1052,11 +1282,13 @@
             if (scWidget) {
                 const trackUrl = extractApiUrl(embedUrl);
                 if (trackUrl) {
-                    scWidget.load(trackUrl, { auto_play: true, show_comments: false, show_user: false, show_reposts: false, color: '22c55e' });
+                    // Note: auto_play is false here, as play is triggered separately by the user in the new UI.
+                    scWidget.load(trackUrl, { auto_play: false, show_comments: false, show_user: false, show_reposts: false, color: '22c55e' });
                 }
             } else { soundcloudPlayerIframe.src = embedUrl; }
         }
         
+        /* OLD: Removed hardcoded button logic
         playerBtns.forEach(button => {
             button.addEventListener('click', (e) => {
                 playerBtns.forEach(btn => btn.classList.remove('active'));
@@ -1064,11 +1296,14 @@
                 loadNewTrack(e.currentTarget.dataset.src);
             });
         });
+        */
 
         scNextBtn.addEventListener('click', () => { if (scWidget) scWidget.next(); });
         scPrevBtn.addEventListener('click', () => { if (scWidget) scWidget.prev(); });
 
         document.addEventListener('DOMContentLoaded', () => {
+            loadSCTracks(); // NEW: Load track data
+            renderSCButtons(); // NEW: Render dynamic buttons
             loadChecklistData(); 
             renderChecklist();
             loadCycleState();
