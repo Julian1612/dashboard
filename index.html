@@ -4,84 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fokus Tag Dashboard Pro</title>
+    
+    <link rel="icon" type="image/png" href="assets/img/favicon.png"> 
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://w.soundcloud.com/player/api.js"></script>
+    
+    <link rel="stylesheet" href="css/style.css">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a; /* Slate-900 */
-            color: #cbd5e1; /* Slate-300 */
-        }
-        #app-container { width: 100%; max-width: 100%; margin: auto; }
-        html, body { height: 100%; overflow: hidden; }
-        
-        .custom-checkbox:checked {
-            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
-            background-color: #22c55e;
-            border-color: #22c55e;
-        }
-        .custom-checkbox:checked + label {
-            text-decoration: line-through;
-            color: #64748b;
-        }
-        
-        .card { background-color: #1e293b; border-radius: 0.75rem; border: 1px solid #334155; }
-        .timer-progress-circle { transform: rotate(-90deg); transition: stroke-dashoffset 0.5s linear; }
-        
-        .player-btn, .timer-setting-btn, .player-control-btn {
-            background-color: #334155; color: #cbd5e1; transition: all 0.2s ease-in-out;
-        }
-        .player-control-btn:hover { background-color: #475569; }
-        .player-btn.active, .timer-setting-btn.active { background-color: #22c55e; color: white; }
-
-        /* Custom scrollbar Styles */
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
-
-        #confetti-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
-        
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-        .tabular-nums { font-variant-numeric: tabular-nums; }
-        
-        @media (min-width: 768px) {
-            #checklist-container { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        }
-
-        .action-icon-btn {
-            color: #94a3b8; cursor: pointer; transition: color 0.2s, background-color 0.2s;
-            padding: 4px; border-radius: 4px;
-        }
-        .action-icon-btn:hover { background-color: #334155; color: #f1f5f9; }
-        .delete-task-btn:hover { color: #ef4444; background-color: rgba(239, 68, 68, 0.1); }
-        
-        /* Drag and Drop Styles */
-        .draggable-item { cursor: grab; user-select: none; }
-        .draggable-item.dragging { opacity: 0.5; background-color: #334155; cursor: grabbing; }
-        .drag-handle { cursor: grab; color: #64748b; padding: 4px; }
-        .drag-handle:hover { color: #94a3b8; }
-        .drag-over { border: 1px dashed #22c55e; background-color: rgba(34, 197, 94, 0.1); }
-        
-        .task-edit-input:focus, .task-duration-input:focus, .task-url-input:focus { background-color: rgba(30, 41, 59, 0.5); }
-        
-        /* Quick Start Button Style */
-        .task-timer-btn {
-            opacity: 0.6; transition: all 0.2s;
-        }
-        .task-timer-btn:hover { opacity: 1; transform: scale(1.05); color: #4ade80; }
-        
-        /* Link Button Style */
-        .task-link-btn {
-            opacity: 0.6; transition: all 0.2s; color: #38bdf8;
-        }
-        .task-link-btn:hover { opacity: 1; transform: scale(1.1); color: #0ea5e9; }
-    </style>
 </head>
 <body class="antialiased text-slate-300">
     <main class="h-screen w-screen p-6 flex flex-col gap-6">
@@ -134,6 +68,11 @@
                         <button id="edit-music-btn" title="Musik bearbeiten" class="text-blue-500 hover:text-blue-400 transition">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                         </button>
+<<<<<<< HEAD
+=======
+                    </div>
+                    <div id="sc-player-buttons" class="flex space-x-1 p-1 bg-slate-900 rounded-md">
+>>>>>>> 02ad940 (new structure)
                     </div>
                     <div id="sc-player-buttons" class="flex space-x-1 p-1 bg-slate-900 rounded-md">
                         </div>
@@ -213,7 +152,7 @@
             <p class="text-xs text-slate-400 mb-4 flex-none">Aufgaben per Drag & Drop verschieben. <b>URL</b> (optional) für externe Links. <b>Zeit</b> (optional) für Timer.</p>
             
             <div id="edit-modal-content" class="flex-grow overflow-hidden grid grid-cols-1 md:grid-cols-3 gap-6 h-full min-h-0">
-                </div>
+            </div>
 
             <div class="flex-none mt-6 pt-4 border-t border-slate-600 flex justify-end space-x-3">
                 <button id="cancel-edit-btn" class="py-2 px-6 bg-slate-600 hover:bg-slate-700 rounded-md text-white font-semibold transition">Abbrechen</button>
@@ -226,6 +165,7 @@
         <div class="card w-[95vw] max-w-2xl h-[90vh] p-6 rounded-xl text-left transform scale-95 transition-transform duration-300 flex flex-col bg-slate-800 border-slate-700 shadow-2xl">
             <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-600 pb-3 flex-none">Focus FM bearbeiten</h3>
             <p class="text-xs text-slate-400 mb-4 flex-none">Füge SoundCloud-Embed-URLs hinzu oder entferne sie. Der <b>Name</b> erscheint auf dem Button.</p>
+<<<<<<< HEAD
             
             <div id="sc-edit-list-container" class="flex-grow overflow-y-auto custom-scroll min-h-0 space-y-3 pr-1">
                 </div>
@@ -352,53 +292,19 @@
         function startTimer() {
             if (timeLeft <= 0) return;
             if (timerState === 'running') clearInterval(countdown);
+=======
+>>>>>>> 02ad940 (new structure)
             
-            timerState = 'running';
-            startPauseBtn.textContent = 'Pause';
-            timerModeDisplay.textContent = 'Fokus'; 
-            const then = Date.now() + timeLeft * 1000;
-            countdown = setInterval(() => {
-                const secondsLeft = Math.round((then - Date.now()) / 1000);
-                if(timerState === 'running' && timerModeDisplay.textContent === 'Fokus') { 
-                    cycleTimeAccumulated++;
-                    updateCycleProgress();
-                    saveCycleState();
-                }
-                if (secondsLeft < 0) {
-                    clearInterval(countdown);
-                    handleTimerEnd();
-                    return;
-                }
-                timeLeft = secondsLeft;
-                updateDisplay(timeLeft);
-            }, 1000);
-        }
+            <div id="sc-edit-list-container" class="flex-grow overflow-y-auto custom-scroll min-h-0 space-y-3 pr-1">
+            </div>
 
-        function pauseTimer() {
-            clearInterval(countdown);
-            timerState = 'paused';
-            startPauseBtn.textContent = 'Weiter';
-        }
-        
-        function resetTimer() {
-            clearInterval(countdown);
-            timerState = 'stopped';
-            startPauseBtn.textContent = 'Start';
-            timeLeft = initialDuration;
-            updateDisplay(timeLeft);
-            timerModeDisplay.textContent = 'Fokus'; 
-            // Reset active task tracker when manually resetting
-            if(timerState === 'stopped') activeTaskTimerId = null;
-        }
-
-        // --- MUSIC MODAL LOGIC ---
-        let pendingTaskDuration = null;
-        let pendingTaskId = null;
-
-        function askToStartMusic(taskId, duration) {
-            pendingTaskId = taskId;
-            pendingTaskDuration = duration;
+            <div class="flex-none mt-6 pt-4 border-t border-slate-600 flex space-x-2">
+                 <input type="text" id="new-sc-name-input" placeholder="Name des Tracks/Playlist" class="w-1/3 bg-slate-700 text-sm rounded-md px-2 py-1 focus:ring-blue-500 border border-transparent focus:border-blue-500 outline-none text-slate-200" />
+                 <input type="text" id="new-sc-url-input" placeholder="SoundCloud Embed URL (Komplett)" class="flex-grow bg-slate-700 text-sm rounded-md px-2 py-1 focus:ring-blue-500 border border-transparent focus:border-blue-500 outline-none text-slate-200" />
+                 <button id="add-sc-track-btn" class="flex-none bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-1 px-3 rounded-md transition">Hinzufügen</button>
+            </div>
             
+<<<<<<< HEAD
             musicModal.classList.remove('hidden');
             musicModal.style.opacity = '0';
             musicModal.querySelector('.card').style.transform = 'scale(0.95)';
@@ -1311,5 +1217,20 @@
         });
 
     </script>
+=======
+            <div class="flex-none mt-4 pt-4 border-t border-slate-600 flex justify-end space-x-3">
+                <button id="cancel-sc-edit-btn" class="py-2 px-6 bg-slate-600 hover:bg-slate-700 rounded-md text-white font-semibold transition">Abbrechen</button>
+                <button id="save-sc-edit-btn" class="py-2 px-6 bg-green-600 hover:bg-green-700 rounded-md text-white font-semibold transition shadow-lg shadow-green-900/50">Speichern</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="js/utils.js"></script>
+    <script type="module" src="js/confetti.js"></script>
+    <script type="module" src="js/music.js"></script>
+    <script type="module" src="js/timer.js"></script>
+    <script type="module" src="js/checklist.js"></script>
+    <script type="module" src="js/main.js"></script>
+>>>>>>> 02ad940 (new structure)
 </body>
 </html>
