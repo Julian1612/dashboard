@@ -69,3 +69,22 @@ input[type=number] { -moz-appearance: textfield; }
     opacity: 0.6; transition: all 0.2s; color: #38bdf8;
 }
 .task-link-btn:hover { opacity: 1; transform: scale(1.1); color: #0ea5e9; }
+
+/* --- Contribution Graph Styles (NEW) --- */
+#contribution-graph-container {
+    padding-left: 0; /* Entfernt den Puffer für Labels */
+}
+
+.contribution-square {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin: 2px;
+    background-color: #1e293b; /* Slate-800 - Level 0 (no activity) */
+    transition: background-color 0.3s ease-in-out;
+}
+
+.level-1 { background-color: #166534; } /* Green-800 (Low Activity) */
+.level-2 { background-color: #15803d; } /* Green-700 */
+.level-3 { background-color: #16a34a; } /* Green-600 */
+.level-4 { background-color: #22c55e; } /* Green-500 (Full Check) */

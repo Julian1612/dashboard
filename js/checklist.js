@@ -12,10 +12,16 @@ const editModal = document.getElementById('edit-modal');
 const editModalContent = document.getElementById('edit-modal-content');
 const progressBar = document.getElementById('progress-bar');
 const progressText = document.getElementById('progress-text');
+// NEU: Contribution Graph
+const contributionGraphContainer = document.getElementById('contribution-graph-container');
+
 
 // Speicher-Schlüssel
 const CHECKED_STATE_KEY = 'focusDayChecklistState_v16';
 const CONTENT_STORAGE_KEY = 'focusDayChecklistContent_v16';
+// NEU: Contribution Data Key
+const CONTRIBUTION_DATA_KEY = 'focusDayContributionData_v1';
+
 
 // Standarddaten
 const DEFAULT_CHECKLIST_DATA = {
@@ -53,6 +59,20 @@ const DEFAULT_CHECKLIST_DATA = {
 };
 
 let currentChecklistData = {};
+// NEU: Contribution Data State
+let contributionData = {};
+
+
+// --- NEUE HILFSFUNKTIONEN ---
+
+/**
+ * Erzeugt den Datumsschlüssel für heute (YYYY-MM-DD).
+ * @returns {string} Der Datumsschlüssel.
+ */
+function getTodayKey() {
+    return new Date().toISOString().split('T')[0];
+}
+
 
 // --- LADE-/SPEICHER-LOGIK ---
 
@@ -75,6 +95,15 @@ export function loadChecklistData() {
         }
     }
     currentChecklistData = content;
+    
+    // NEU: Contribution Data laden
+    const savedContribution = localStorage.getItem(CONTRIBUTION_DATA_KEY);
+    try {
+        contributionData = savedContribution ? JSON.parse(savedContribution) : {};
+    } catch(e) {
+        console.error("Error loading contribution data:", e);
+        contributionData = {};
+    }
 }
 
 function saveChecklistState() {
@@ -98,6 +127,12 @@ function saveChecklistContent() {
     }
     localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(contentToSave));
 }
+
+// NEU: Contribution Data speichern
+function saveContributionData() {
+    localStorage.setItem(CONTRIBUTION_DATA_KEY, JSON.stringify(contributionData));
+}
+
 
 // --- RENDER- & UPDATE-LOGIK ---
 
@@ -197,7 +232,6 @@ function handleTaskChange(e) {
         if(isChecked) {
             // Konfetti-Partikel für abgehakten Task
             const rect = e.target.getBoundingClientRect();
-            // Erzeugen der Partikel-Animation (simuliert, da Confetti-Objekt nicht global ist)
             // Die Konfetti-Logik läuft in confetti.js und wird nur per triggerConfetti() oder indirekt durch den Timer-End-Handler ausgelöst.
         }
     }
@@ -238,7 +272,105 @@ function updateProgress() {
     if (progressBar) progressBar.style.width = `${percentage}%`;
     if (progressText) progressText.textContent = `${checkedTasks}/${totalTasks} Erledigt`;
     if(checkedTasks === totalTasks && totalTasks > 0) triggerConfetti();
+    
+    // NEU: Tagesergebnis loggen und Graph rendern
+    logDailyProgress(checkedTasks, totalTasks);
+    renderContributionGraph();
 }
+
+/**
+ * Speichert den Fortschritt des aktuellen Tages in der History.
+ */
+function logDailyProgress(checked, total) {
+    const todayKey = getTodayKey();
+    contributionData[todayKey] = { checked, total };
+    saveContributionData();
+}
+
+
+// --- NEUE RENDERING LOGIK ---
+
+/**
+ * Rendert den GitHub-ähnlichen Aktivitäts-Graph.
+ * Zeigt die letzten 16 Wochen an (16 Spalten à 7 Tage).
+ */
+export function renderContributionGraph() {
+    if (!contributionGraphContainer) return;
+
+    contributionGraphContainer.innerHTML = '';
+    
+    // Die letzten 16 Wochen anzeigen (16 Spalten * 7 Tage)
+    const weeksToDisplay = 16; 
+    const daysToDisplay = weeksToDisplay * 7;
+    const now = new Date();
+    
+    // Array der anzuzeigenden Daten im Format { date: 'YYYY-MM-DD', checked: N, total: M }
+    const displayData = [];
+
+    // Finde den ersten Tag, der angezeigt werden soll (vor 16 Wochen)
+    const startDate = new Date(now);
+    // +1, damit der heutige Tag der letzte ist, und die Gesamtanzahl passt
+    startDate.setDate(now.getDate() - daysToDisplay + 1); 
+    
+    // Generiere alle Tage von startDate bis heute
+    for (let i = 0; i < daysToDisplay; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        const dateKey = date.toISOString().split('T')[0];
+        
+        displayData.push({
+            date: dateKey,
+            ...contributionData[dateKey] // Fügt checked/total hinzu oder undefined
+        });
+    }
+    
+    // Erstelle Spalten (Wochen)
+    const graphWrapper = document.createElement('div');
+    graphWrapper.className = 'flex flex-row-reverse gap-1'; // Rechts nach Links (Aktuelle Woche rechts)
+    
+    // Iteriere von der aktuellsten Woche (week=15) zurück bis zur ältesten (week=0)
+    for (let week = weeksToDisplay - 1; week >= 0; week--) {
+        const weekCol = document.createElement('div');
+        // Dreht die Spalte um: Sonntag (Index 6) wird unten angehängt, Montag (Index 0) oben.
+        weekCol.className = 'flex flex-col-reverse gap-[2px]'; 
+        
+        // Iteriere von Sonntag (6) bis Montag (0)
+        for (let day = 6; day >= 0; day--) { 
+            const index = week * 7 + day;
+            
+            if (index >= displayData.length) continue; 
+            
+            const dailyData = displayData[index];
+            
+            const square = document.createElement('div');
+            square.className = 'contribution-square';
+            
+            if (dailyData.checked !== undefined) {
+                const percentage = dailyData.total > 0 ? (dailyData.checked / dailyData.total) : 0;
+                let level = 0;
+                if (percentage >= 0.9) { level = 4; }
+                else if (percentage >= 0.7) { level = 3; }
+                else if (percentage >= 0.4) { level = 2; }
+                else if (percentage > 0) { level = 1; }
+                
+                if (level > 0) {
+                    square.classList.add(`level-${level}`);
+                }
+                square.title = `${dailyData.date}: ${dailyData.checked}/${dailyData.total} Tasks erledigt`;
+            } else {
+                 square.title = `${dailyData.date}: Keine Daten`;
+            }
+
+            // Füge den Tag in die Spalte ein (Reihenfolge Mo-So von oben nach unten, durch col-reverse)
+            weekCol.appendChild(square);
+        }
+        graphWrapper.appendChild(weekCol);
+    }
+    
+    // Fügt den Graph-Wrapper zum Container hinzu (keine Labels)
+    contributionGraphContainer.appendChild(graphWrapper);
+}
+
 
 // --- EDIT MODAL & D&D LOGIK ---
 

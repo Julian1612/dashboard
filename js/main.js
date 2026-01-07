@@ -2,7 +2,7 @@
 
 import { initConfetti } from './confetti.js';
 import { loadSCTracks, renderSCButtons, initializeSCWidget, setupMusicListeners } from './music.js';
-import { loadChecklistData, renderChecklist, setupChecklistListeners } from './checklist.js';
+import { loadChecklistData, renderChecklist, setupChecklistListeners, renderContributionGraph } from './checklist.js';
 import { loadCycleState, setupTimerListeners } from './timer.js';
 
 /**
@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Initialisieren der visuellen Komponenten/Widgets
     renderSCButtons(); // Muss vor initializeSCWidget() aufgerufen werden
     renderChecklist();
+    renderContributionGraph(); // NEU: Aktivitäts-Graph rendern
     initConfetti(); 
 
     // 3. Initialisieren des externen Widgets
