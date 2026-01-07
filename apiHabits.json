@@ -1,0 +1,792 @@
+{
+  "message": "Success",
+  "data": [
+    {
+      "id": "013434fe-6363-4e4c-9d24-9126fa433a6a",
+      "name": "Große Putzroutine",
+      "is_archived": false,
+      "start_date": "2026-01-08T09:52:29.000Z",
+      "time_of_day": [
+        "any_time"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260108T095229Z\nRRULE:FREQ=WEEKLY;BYDAY=SU,FR,SA",
+      "remind": [
+        "10:0",
+        "12:0",
+        "15:0",
+        "9:0"
+      ],
+      "area": {
+        "id": "-OiECTJ962xSitUtsrBl",
+        "name": "Struktur",
+        "priority": "2"
+      },
+      "created_date": "2026-01-08T09:52:29.000Z",
+      "priority": -1.2676505955058629e+30
+    },
+    {
+      "id": "219117B1-1554-47AC-8177-26B441806099",
+      "name": "Arbeitsroutine",
+      "is_archived": false,
+      "start_date": "2026-01-07T10:25:57.849Z",
+      "time_of_day": [
+        "afternoon"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 17,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 17,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260107T102557Z\nRRULE:FREQ=WEEKLY;BYDAY=FR,TH,WE,TU,MO",
+      "remind": [],
+      "area": {
+        "id": "-OiEBy4gY1UFu1z_HPh3",
+        "name": "Work",
+        "priority": "B"
+      },
+      "created_date": "2026-01-07T10:25:57.849Z",
+      "priority": -1.2676506000806554e+30
+    },
+    {
+      "id": "22c3ac61-a398-4d87-bdb1-1c7114b20bc2",
+      "name": "Plan my week",
+      "is_archived": false,
+      "start_date": "2026-01-07T05:36:15.000Z",
+      "time_of_day": [
+        "morning"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260107T053615Z\nRRULE:FREQ=WEEKLY;BYDAY=SU",
+      "remind": [
+        "10:0",
+        "11:0",
+        "9:0"
+      ],
+      "area": null,
+      "created_date": "2026-01-07T05:36:15.000Z",
+      "priority": -1.266412660188944e+30
+    },
+    {
+      "id": "2C03AE56-F728-4D7D-B42B-596AC47EB13A",
+      "name": "Affirmationen ",
+      "is_archived": false,
+      "start_date": "2026-01-06T21:32:31.342Z",
+      "time_of_day": [
+        "any_time"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260106T213231Z\nRRULE:FREQ=DAILY",
+      "remind": [
+        "14:38",
+        "18:38",
+        "20:38",
+        "9:0"
+      ],
+      "area": {
+        "id": "-OiECQ6kmNuqrYEg6GMP",
+        "name": "Balance",
+        "priority": "9"
+      },
+      "created_date": "2026-01-06T21:32:31.342Z",
+      "priority": -1.2676493913024098e+30
+    },
+    {
+      "id": "3c3e30e3-6894-41fd-92af-34fee60b81f7",
+      "name": "Waschen",
+      "is_archived": false,
+      "start_date": "2026-01-08T10:01:05.000Z",
+      "time_of_day": [
+        "morning",
+        "afternoon"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260108T100105Z\nRRULE:FREQ=WEEKLY;BYDAY=MO,TH,FR",
+      "remind": [
+        "10:0",
+        "11:0",
+        "8:0"
+      ],
+      "area": {
+        "id": "-OiECTJ962xSitUtsrBl",
+        "name": "Struktur",
+        "priority": "2"
+      },
+      "created_date": "2026-01-08T10:01:05.000Z",
+      "priority": -1.2676505978670462e+30
+    },
+    {
+      "id": "3f25e1ad-c233-453c-9483-c1b29cfa6619",
+      "name": "Meditate",
+      "is_archived": false,
+      "start_date": "2026-01-07T05:19:25.000Z",
+      "time_of_day": [
+        "morning",
+        "evening"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260107T051925Z\nRRULE:FREQ=DAILY",
+      "remind": [
+        "17:0",
+        "9:0"
+      ],
+      "area": {
+        "id": "-OiECQ6kmNuqrYEg6GMP",
+        "name": "Balance",
+        "priority": "9"
+      },
+      "created_date": "2026-01-07T05:19:25.000Z",
+      "priority": 0
+    },
+    {
+      "id": "43198381-b323-4541-84f1-41f7d51a6c0b",
+      "name": "Plan 3 To-dos for the day",
+      "is_archived": false,
+      "start_date": "2026-01-07T05:31:24.000Z",
+      "time_of_day": [
+        "morning"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260107T053124Z\nRRULE:FREQ=DAILY",
+      "remind": [
+        "16:30",
+        "18:0",
+        "7:30",
+        "9:0"
+      ],
+      "area": {
+        "id": "-OiECTJ962xSitUtsrBl",
+        "name": "Struktur",
+        "priority": "2"
+      },
+      "created_date": "2026-01-07T05:31:24.000Z",
+      "priority": -1.2577470799139464e+30
+    },
+    {
+      "id": "84897491-cff5-4209-a9ea-a52d90de0c1f",
+      "name": "Take Supplements ",
+      "is_archived": false,
+      "start_date": "2026-01-07T05:27:34.000Z",
+      "time_of_day": [
+        "any_time"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260107T052734Z\nRRULE:FREQ=DAILY",
+      "remind": [
+        "18:30",
+        "9:0"
+      ],
+      "area": {
+        "id": "-OiECSEVjRw9TMta8tkt",
+        "name": "Gesundheit",
+        "priority": "4"
+      },
+      "created_date": "2026-01-07T05:27:34.000Z",
+      "priority": -1.2280365189710972e+30
+    },
+    {
+      "id": "8C2B3E09-DEBD-4ECD-940D-A775A8B952D4",
+      "name": "Morgens Wasser trinken",
+      "is_archived": false,
+      "start_date": "2026-01-07T07:27:08.810Z",
+      "time_of_day": [
+        "morning"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260107T072708Z\nRRULE:FREQ=DAILY",
+      "remind": [
+        "9:0"
+      ],
+      "area": {
+        "id": "-OiECSEVjRw9TMta8tkt",
+        "name": "Gesundheit",
+        "priority": "4"
+      },
+      "created_date": "2026-01-07T07:27:08.810Z",
+      "priority": -1.2676505996379336e+30
+    },
+    {
+      "id": "8c4ecc6e-3b6d-4a5a-9d3a-a0e43267fb1b",
+      "name": "Reality-Check",
+      "is_archived": false,
+      "start_date": "2026-01-06T09:23:29.000Z",
+      "time_of_day": [
+        "afternoon",
+        "evening"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260106T092329Z\nRRULE:FREQ=DAILY",
+      "remind": [
+        "12:15",
+        "18:45",
+        "7:30"
+      ],
+      "area": null,
+      "created_date": "2026-01-06T09:23:29.000Z",
+      "priority": -9.50737950171172e+29
+    },
+    {
+      "id": "B7EE5EB8-9EB6-4462-90BD-C0C1236EDE10",
+      "name": "Test",
+      "is_archived": false,
+      "start_date": "2026-01-07T10:19:39.856Z",
+      "time_of_day": [
+        "any_time"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260107T101939Z\nRRULE:FREQ=DAILY",
+      "remind": [
+        "9:0"
+      ],
+      "area": null,
+      "created_date": "2026-01-07T10:19:39.856Z",
+      "priority": -1.2676505999330815e+30
+    },
+    {
+      "id": "a88f4779-2402-4252-ba7f-707d4eb38c08",
+      "name": "Kleine Putzroutine ",
+      "is_archived": false,
+      "start_date": "2026-01-08T09:48:02.000Z",
+      "time_of_day": [
+        "any_time"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260108T094802Z\nRRULE:FREQ=WEEKLY;BYDAY=TU",
+      "remind": [
+        "17:38",
+        "19:12",
+        "20:34"
+      ],
+      "area": {
+        "id": "-OiECTJ962xSitUtsrBl",
+        "name": "Struktur",
+        "priority": "2"
+      },
+      "created_date": "2026-01-08T09:48:02.000Z",
+      "priority": -1.2676505246703657e+30
+    },
+    {
+      "id": "a951a6fc-e7d6-4a54-b180-0c14a6fc34c8",
+      "name": "Einkaufen gehen",
+      "is_archived": false,
+      "start_date": "2026-01-08T10:02:06.000Z",
+      "time_of_day": [
+        "any_time"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260108T100206Z\nRRULE:FREQ=WEEKLY;BYDAY=FR,SA",
+      "remind": [
+        "9:0"
+      ],
+      "area": {
+        "id": "-OiECTJ962xSitUtsrBl",
+        "name": "Struktur",
+        "priority": "2"
+      },
+      "created_date": "2026-01-08T10:02:06.000Z",
+      "priority": -1.2676505990476378e+30
+    },
+    {
+      "id": "aaf0ee66-99c0-41ed-ab91-15f943171210",
+      "name": "Eltern anrufen",
+      "is_archived": false,
+      "start_date": "2026-01-07T05:35:32.000Z",
+      "time_of_day": [
+        "afternoon",
+        "evening"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260107T053532Z\nRRULE:FREQ=WEEKLY;BYDAY=SU",
+      "remind": [
+        "13:0",
+        "16:0"
+      ],
+      "area": {
+        "id": "-OiEBwiJU_hbKBSZz1bw",
+        "name": "Privat",
+        "priority": "U"
+      },
+      "created_date": "2026-01-07T05:35:32.000Z",
+      "priority": -1.2651747201496586e+30
+    },
+    {
+      "id": "b193e28f-11da-464d-ab95-245996e9aa8f",
+      "name": "Write in Journal",
+      "is_archived": false,
+      "start_date": "2026-01-07T05:20:55.000Z",
+      "time_of_day": [
+        "evening"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260107T052055Z\nRRULE:FREQ=DAILY",
+      "remind": [
+        "18:0",
+        "21:0"
+      ],
+      "area": null,
+      "created_date": "2026-01-07T05:20:55.000Z",
+      "priority": -6.338253001141147e+29
+    },
+    {
+      "id": "b4057efd-8ca1-464a-89be-18b105d14c3d",
+      "name": "Workout",
+      "is_archived": false,
+      "start_date": "2026-01-08T09:27:11.000Z",
+      "time_of_day": [
+        "morning",
+        "evening"
+      ],
+      "goal": {
+        "unit_type": "min",
+        "value": 25,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "min",
+          "value": 25,
+          "periodicity": "daily"
+        },
+        {
+          "unit_type": "min",
+          "value": 15,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": null,
+      "recurrence": "DTSTART:20260108T092711Z\nRRULE:FREQ=WEEKLY;BYDAY=SU,MO,TH,FR,SA",
+      "remind": [
+        "6:30",
+        "7:0"
+      ],
+      "area": {
+        "id": "-OiECSEVjRw9TMta8tkt",
+        "name": "Gesundheit",
+        "priority": "4"
+      },
+      "created_date": "2026-01-08T09:27:11.000Z",
+      "priority": -1.2676493913024098e+30
+    },
+    {
+      "id": "cbda6f83-699f-4ee8-a72e-d3b582824d18",
+      "name": "Zimmer ist aufgeräumt",
+      "is_archived": false,
+      "start_date": "2026-01-08T09:46:30.000Z",
+      "time_of_day": [
+        "evening"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260108T094630Z\nRRULE:FREQ=DAILY",
+      "remind": [
+        "21:0"
+      ],
+      "area": {
+        "id": "-OiECTJ962xSitUtsrBl",
+        "name": "Struktur",
+        "priority": "2"
+      },
+      "created_date": "2026-01-08T09:46:30.000Z",
+      "priority": -1.267650449112502e+30
+    },
+    {
+      "id": "cdfc59b0-bcc2-48a3-bdfe-8ce61832c5c5",
+      "name": "Zimmer saugen",
+      "is_archived": false,
+      "start_date": "2026-01-08T09:50:02.000Z",
+      "time_of_day": [
+        "any_time"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260108T095002Z\nRRULE:FREQ=WEEKLY;BYDAY=TH",
+      "remind": [
+        "17:30",
+        "18:45",
+        "19:28"
+      ],
+      "area": {
+        "id": "-OiECTJ962xSitUtsrBl",
+        "name": "Struktur",
+        "priority": "2"
+      },
+      "created_date": "2026-01-08T09:50:02.000Z",
+      "priority": -1.2676505813387635e+30
+    },
+    {
+      "id": "d50f8680-efe1-4f87-89d8-d96363860eae",
+      "name": "Zimmer aufräumen",
+      "is_archived": false,
+      "start_date": "2026-01-08T09:45:10.000Z",
+      "time_of_day": [
+        "afternoon",
+        "evening"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260108T094510Z\nRRULE:FREQ=WEEKLY;BYDAY=MO",
+      "remind": [
+        "17:30",
+        "18:15",
+        "19:5",
+        "20:15",
+        "20:55"
+      ],
+      "area": {
+        "id": "-OiECTJ962xSitUtsrBl",
+        "name": "Struktur",
+        "priority": "2"
+      },
+      "created_date": "2026-01-08T09:45:10.000Z",
+      "priority": -1.2676502979967745e+30
+    },
+    {
+      "id": "e2471aab-c6cc-42bb-9a94-9f0d6bb53be8",
+      "name": "Bewegen (Spazieren, Dehnen)",
+      "is_archived": false,
+      "start_date": "2026-01-08T09:40:39.000Z",
+      "time_of_day": [
+        "any_time"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260108T094039Z\nRRULE:FREQ=DAILY",
+      "remind": [
+        "11:45",
+        "12:25",
+        "14:23",
+        "16:30",
+        "18:0",
+        "20:0"
+      ],
+      "area": {
+        "id": "-OiECSEVjRw9TMta8tkt",
+        "name": "Gesundheit",
+        "priority": "4"
+      },
+      "created_date": "2026-01-08T09:40:39.000Z",
+      "priority": -1.2676499957653196e+30
+    },
+    {
+      "id": "e568eb27-63ea-437b-b94b-57e8997b5e2e",
+      "name": "Meeting mit mir selbst",
+      "is_archived": false,
+      "start_date": "2026-01-07T05:37:50.000Z",
+      "time_of_day": [
+        "morning"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260107T053750Z\nRRULE:FREQ=WEEKLY;BYDAY=SU",
+      "remind": [
+        "10:0",
+        "11:0",
+        "9:0"
+      ],
+      "area": null,
+      "created_date": "2026-01-07T05:37:50.000Z",
+      "priority": -1.2670316302085867e+30
+    },
+    {
+      "id": "e5bd1465-e883-4c16-ac50-b2472739abbc",
+      "name": "Abstauben",
+      "is_archived": false,
+      "start_date": "2026-01-08T09:52:09.000Z",
+      "time_of_day": [
+        "any_time"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260108T095209Z\nRRULE:FREQ=WEEKLY;BYDAY=MO,SU",
+      "remind": [],
+      "area": {
+        "id": "-OiECTJ962xSitUtsrBl",
+        "name": "Struktur",
+        "priority": "2"
+      },
+      "created_date": "2026-01-08T09:52:09.000Z",
+      "priority": -1.2676505907834964e+30
+    },
+    {
+      "id": "f9e5a6b2-a4b0-4deb-8016-74ac64ab676b",
+      "name": "Saugen Klo und Bad",
+      "is_archived": false,
+      "start_date": "2026-01-08T09:49:21.000Z",
+      "time_of_day": [
+        "afternoon",
+        "evening"
+      ],
+      "goal": {
+        "unit_type": "rep",
+        "value": 1,
+        "periodicity": "daily"
+      },
+      "goal_history_items": [
+        {
+          "unit_type": "rep",
+          "value": 1,
+          "periodicity": "daily"
+        }
+      ],
+      "log_method": "manual",
+      "recurrence": "DTSTART:20260108T094921Z\nRRULE:FREQ=WEEKLY;BYDAY=WE",
+      "remind": [
+        "17:30",
+        "19:45",
+        "20:38"
+      ],
+      "area": {
+        "id": "-OiECTJ962xSitUtsrBl",
+        "name": "Struktur",
+        "priority": "2"
+      },
+      "created_date": "2026-01-08T09:49:21.000Z",
+      "priority": -1.2676505624492975e+30
+    }
+  ],
+  "version": "v1.2",
+  "status": true,
+  "errors": []
+}
