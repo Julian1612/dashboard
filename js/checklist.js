@@ -15,13 +15,14 @@ const progressText = document.getElementById('progress-text');
 // NEU: Contribution Graph
 const contributionGraphContainer = document.getElementById('contribution-graph-container');
 
-
 // Speicher-Schlüssel
 const CHECKED_STATE_KEY = 'focusDayChecklistState_v16';
 const CONTENT_STORAGE_KEY = 'focusDayChecklistContent_v16';
-// NEU: Contribution Data Key
 const CONTRIBUTION_DATA_KEY = 'focusDayContributionData_v1';
+const HABITIFY_TOKEN_KEY = 'habitify_api_token';
 
+// API-Konstanten
+const HABITIFY_API_BASE = 'https://api.habitify.me';
 
 // Standarddaten
 const DEFAULT_CHECKLIST_DATA = {
@@ -59,20 +60,53 @@ const DEFAULT_CHECKLIST_DATA = {
 };
 
 let currentChecklistData = {};
-// NEU: Contribution Data State
 let contributionData = {};
+let availableHabits = []; // Temporärer Cache für Habitify-Habits während des Editiervorgangs
 
+// --- HILFSFUNKTIONEN ---
 
-// --- NEUE HILFSFUNKTIONEN ---
-
-/**
- * Erzeugt den Datumsschlüssel für heute (YYYY-MM-DD).
- * @returns {string} Der Datumsschlüssel.
- */
 function getTodayKey() {
     return new Date().toISOString().split('T')[0];
 }
 
+// --- HABITIFY API LOGIK ---
+
+async function syncWithHabitify(habitId, status) {
+    const token = localStorage.getItem(HABITIFY_TOKEN_KEY);
+    if (!token || !habitId) return;
+
+    try {
+        await fetch(`${HABITIFY_API_BASE}/logs/${habitId}`, {
+            method: status ? 'POST' : 'DELETE',
+            headers: { 
+                'Authorization': token,
+                'Content-Type': 'application/json' 
+            }
+        });
+    } catch (err) {
+        console.error("Habitify Sync Fehler:", err);
+    }
+}
+
+export async function fetchHabitifyHabits() {
+    const tokenInput = document.getElementById('habitify-token-input');
+    const token = tokenInput.value.trim();
+    if (!token) {
+        alert("Bitte gib einen API Token ein.");
+        return;
+    }
+    localStorage.setItem(HABITIFY_TOKEN_KEY, token);
+    try {
+        const res = await fetch(`${HABITIFY_API_BASE}/habits`, {
+            headers: { 'Authorization': token }
+        });
+        const data = await res.json();
+        availableHabits = data.data || [];
+        renderEditModal(editModal.currentData);
+    } catch (err) {
+        alert("Fehler beim Laden der Habits.");
+    }
+}
 
 // --- LADE-/SPEICHER-LOGIK ---
 
@@ -90,20 +124,22 @@ export function loadChecklistData() {
                 ...task,
                 checked: state[task.id] || false,
                 duration: task.duration || null,
-                url: task.url || null
+                url: task.url || null,
+                habitifyId: task.habitifyId || null
             }));
         }
     }
     currentChecklistData = content;
     
-    // NEU: Contribution Data laden
     const savedContribution = localStorage.getItem(CONTRIBUTION_DATA_KEY);
     try {
         contributionData = savedContribution ? JSON.parse(savedContribution) : {};
-    } catch(e) {
-        console.error("Error loading contribution data:", e);
-        contributionData = {};
-    }
+    } catch(e) { contributionData = {}; }
+
+    // Token initialisieren
+    const savedToken = localStorage.getItem(HABITIFY_TOKEN_KEY);
+    const tokenInput = document.getElementById('habitify-token-input');
+    if (savedToken && tokenInput) tokenInput.value = savedToken;
 }
 
 function saveChecklistState() {
@@ -121,18 +157,15 @@ function saveChecklistContent() {
     for (const key in currentChecklistData) {
         contentToSave[key] = {
             title: currentChecklistData[key].title,
-            // Speichere nur notwendige Daten
-            tasks: currentChecklistData[key].tasks.map(({ id, text, duration, url }) => ({ id, text, duration, url }))
+            tasks: currentChecklistData[key].tasks.map(({ id, text, duration, url, habitifyId }) => ({ id, text, duration, url, habitifyId }))
         };
     }
     localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(contentToSave));
 }
 
-// NEU: Contribution Data speichern
 function saveContributionData() {
     localStorage.setItem(CONTRIBUTION_DATA_KEY, JSON.stringify(contributionData));
 }
-
 
 // --- RENDER- & UPDATE-LOGIK ---
 
@@ -141,11 +174,7 @@ export function renderChecklist() {
     focusList.innerHTML = '';
     eveningList.innerHTML = '';
 
-    const listMap = {
-        'morgen-start': morningList,
-        'fokus-flow': focusList,
-        'tages-abschluss': eveningList
-    };
+    const listMap = { 'morgen-start': morningList, 'fokus-flow': focusList, 'tages-abschluss': eveningList };
 
     Object.keys(currentChecklistData).forEach(key => {
         const category = currentChecklistData[key];
@@ -158,7 +187,6 @@ export function renderChecklist() {
         category.tasks.forEach(task => {
             const li = document.createElement('li');
             li.className = "flex items-center justify-between"; 
-            
             const leftSide = document.createElement('div');
             leftSide.className = "flex items-start flex-grow min-w-0";
 
@@ -171,7 +199,8 @@ export function renderChecklist() {
             const label = document.createElement('label');
             label.htmlFor = task.id;
             label.className = "text-sm leading-tight pt-[2px] truncate";
-            label.textContent = task.text;
+            // Zeige Habitify-Indikator
+            label.innerHTML = task.habitifyId ? `<span class="text-blue-400 font-bold mr-1">H</span>${task.text}` : task.text;
 
             leftSide.appendChild(checkbox);
             leftSide.appendChild(label);
@@ -180,33 +209,20 @@ export function renderChecklist() {
             const rightSide = document.createElement('div');
             rightSide.className = "flex items-center gap-2 flex-none ml-2";
 
-            // LINK BUTTON
             if (task.url && task.url.trim() !== '') {
                 const linkBtn = document.createElement('a');
                 linkBtn.href = task.url;
                 linkBtn.target = "_blank";
-                linkBtn.rel = "noopener noreferrer";
                 linkBtn.className = "task-link-btn flex items-center justify-center p-1 rounded-full bg-slate-800 border border-slate-700";
-                linkBtn.title = `Öffne ${task.url}`;
-                linkBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                `;
+                linkBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
                 rightSide.appendChild(linkBtn);
             }
 
-            // PLAY BUTTON
             if (task.duration && task.duration > 0) {
                 const playBtn = document.createElement('button');
                 playBtn.className = "task-timer-btn flex items-center gap-1 text-xs bg-slate-800 hover:bg-slate-700 text-green-500 px-2 py-1 rounded border border-slate-700";
-                playBtn.title = `${task.duration} Min. Timer starten`;
-                playBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                    <span>${task.duration}m</span>
-                `;
-                playBtn.onclick = (e) => {
-                    e.preventDefault();
-                    askToStartMusic(task.id, task.duration);
-                };
+                playBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg><span>${task.duration}m</span>`;
+                playBtn.onclick = () => askToStartMusic(task.id, task.duration);
                 rightSide.appendChild(playBtn);
             }
             
@@ -221,47 +237,35 @@ export function renderChecklist() {
 function handleTaskChange(e) {
     const taskId = e.target.id;
     const isChecked = e.target.checked;
-    let found = false;
+    let foundTask = null;
     Object.values(currentChecklistData).forEach(category => {
         const task = category.tasks.find(t => t.id === taskId);
-        if (task) { task.checked = isChecked; found = true; }
+        if (task) { task.checked = isChecked; foundTask = task; }
     });
     
-    if (found) { 
+    if (foundTask) { 
         saveChecklistState(); 
-        if(isChecked) {
-            // Konfetti-Partikel für abgehakten Task
-            const rect = e.target.getBoundingClientRect();
-            // Die Konfetti-Logik läuft in confetti.js und wird nur per triggerConfetti() oder indirekt durch den Timer-End-Handler ausgelöst.
-        }
+        if (foundTask.habitifyId) syncWithHabitify(foundTask.habitifyId, isChecked);
     }
     updateProgress();
 }
 
-/**
- * Funktion, die vom Timer-Modul aufgerufen wird, um eine Task abzuhaken.
- * @param {string} taskId - ID der abzuhakenden Task.
- */
 export function handleTaskCompletion(taskId) {
     let foundAndChecked = false;
+    let completedTask = null;
     Object.values(currentChecklistData).forEach(category => {
         const task = category.tasks.find(t => t.id === taskId);
-        if (task && !task.checked) { 
-            task.checked = true; 
-            foundAndChecked = true;
-        }
+        if (task && !task.checked) { task.checked = true; foundAndChecked = true; completedTask = task; }
     });
-    
     if(foundAndChecked) {
         saveChecklistState();
         renderChecklist();
+        if (completedTask.habitifyId) syncWithHabitify(completedTask.habitifyId, true);
     }
 }
 
-
 function updateProgress() {
-    let totalTasks = 0;
-    let checkedTasks = 0;
+    let totalTasks = 0; let checkedTasks = 0;
     Object.values(currentChecklistData).forEach(category => {
         category.tasks.forEach(task => {
             totalTasks++;
@@ -273,380 +277,167 @@ function updateProgress() {
     if (progressText) progressText.textContent = `${checkedTasks}/${totalTasks} Erledigt`;
     if(checkedTasks === totalTasks && totalTasks > 0) triggerConfetti();
     
-    // NEU: Tagesergebnis loggen und Graph rendern
     logDailyProgress(checkedTasks, totalTasks);
     renderContributionGraph();
 }
 
-/**
- * Speichert den Fortschritt des aktuellen Tages in der History.
- */
 function logDailyProgress(checked, total) {
-    const todayKey = getTodayKey();
-    contributionData[todayKey] = { checked, total };
+    contributionData[getTodayKey()] = { checked, total };
     saveContributionData();
 }
 
-
-// --- NEUE RENDERING LOGIK ---
-
-/**
- * Rendert den GitHub-ähnlichen Aktivitäts-Graph.
- * Zeigt die letzten 16 Wochen an (16 Spalten à 7 Tage).
- */
 export function renderContributionGraph() {
     if (!contributionGraphContainer) return;
-
     contributionGraphContainer.innerHTML = '';
+    const weeksToDisplay = 16; const daysToDisplay = weeksToDisplay * 7;
+    const now = new Date(); const displayData = [];
+    const startDate = new Date(now); startDate.setDate(now.getDate() - daysToDisplay + 1); 
     
-    // Die letzten 16 Wochen anzeigen (16 Spalten * 7 Tage)
-    const weeksToDisplay = 16; 
-    const daysToDisplay = weeksToDisplay * 7;
-    const now = new Date();
-    
-    // Array der anzuzeigenden Daten im Format { date: 'YYYY-MM-DD', checked: N, total: M }
-    const displayData = [];
-
-    // Finde den ersten Tag, der angezeigt werden soll (vor 16 Wochen)
-    const startDate = new Date(now);
-    // +1, damit der heutige Tag der letzte ist, und die Gesamtanzahl passt
-    startDate.setDate(now.getDate() - daysToDisplay + 1); 
-    
-    // Generiere alle Tage von startDate bis heute
     for (let i = 0; i < daysToDisplay; i++) {
-        const date = new Date(startDate);
-        date.setDate(startDate.getDate() + i);
+        const date = new Date(startDate); date.setDate(startDate.getDate() + i);
         const dateKey = date.toISOString().split('T')[0];
-        
-        displayData.push({
-            date: dateKey,
-            ...contributionData[dateKey] // Fügt checked/total hinzu oder undefined
-        });
+        displayData.push({ date: dateKey, ...contributionData[dateKey] });
     }
     
-    // Erstelle Spalten (Wochen)
     const graphWrapper = document.createElement('div');
-    graphWrapper.className = 'flex flex-row-reverse gap-1'; // Rechts nach Links (Aktuelle Woche rechts)
-    
-    // Iteriere von der aktuellsten Woche (week=15) zurück bis zur ältesten (week=0)
+    graphWrapper.className = 'flex flex-row-reverse gap-1';
     for (let week = weeksToDisplay - 1; week >= 0; week--) {
         const weekCol = document.createElement('div');
-        // Dreht die Spalte um: Sonntag (Index 6) wird unten angehängt, Montag (Index 0) oben.
         weekCol.className = 'flex flex-col-reverse gap-[2px]'; 
-        
-        // Iteriere von Sonntag (6) bis Montag (0)
         for (let day = 6; day >= 0; day--) { 
             const index = week * 7 + day;
-            
             if (index >= displayData.length) continue; 
-            
             const dailyData = displayData[index];
-            
             const square = document.createElement('div');
             square.className = 'contribution-square';
-            
             if (dailyData.checked !== undefined) {
-                const percentage = dailyData.total > 0 ? (dailyData.checked / dailyData.total) : 0;
-                let level = 0;
-                if (percentage >= 0.9) { level = 4; }
-                else if (percentage >= 0.7) { level = 3; }
-                else if (percentage >= 0.4) { level = 2; }
-                else if (percentage > 0) { level = 1; }
-                
-                if (level > 0) {
-                    square.classList.add(`level-${level}`);
-                }
-                square.title = `${dailyData.date}: ${dailyData.checked}/${dailyData.total} Tasks erledigt`;
-            } else {
-                 square.title = `${dailyData.date}: Keine Daten`;
+                const pct = dailyData.total > 0 ? (dailyData.checked / dailyData.total) : 0;
+                let lvl = pct >= 0.9 ? 4 : pct >= 0.7 ? 3 : pct >= 0.4 ? 2 : pct > 0 ? 1 : 0;
+                if (lvl > 0) square.classList.add(`level-${lvl}`);
+                square.title = `${dailyData.date}: ${dailyData.checked}/${dailyData.total}`;
             }
-
-            // Füge den Tag in die Spalte ein (Reihenfolge Mo-So von oben nach unten, durch col-reverse)
             weekCol.appendChild(square);
         }
         graphWrapper.appendChild(weekCol);
     }
-    
-    // Fügt den Graph-Wrapper zum Container hinzu (keine Labels)
     contributionGraphContainer.appendChild(graphWrapper);
 }
 
+// --- EDIT MODAL & D&D ---
 
-// --- EDIT MODAL & D&D LOGIK ---
-
-let draggedItemIndex = null;
-let draggedCategoryKey = null;
+let draggedItemIndex = null; let draggedCategoryKey = null;
 
 function openEditModal() {
     editModal.currentData = JSON.parse(JSON.stringify(currentChecklistData)); 
     renderEditModal(editModal.currentData);
-    
     editModal.classList.remove('hidden');
-    editModal.style.opacity = '0';
-    editModal.querySelector('.card').style.transform = 'scale(0.95)';
-    setTimeout(() => { 
-        editModal.style.opacity = '1';
-        editModal.querySelector('.card').style.transform = 'scale(1)';
-    }, 10);
+    setTimeout(() => { editModal.style.opacity = '1'; }, 10);
 }
 
 function closeEditModal() {
     editModal.style.opacity = '0';
-    editModal.querySelector('.card').style.transform = 'scale(0.95)';
     setTimeout(() => { editModal.classList.add('hidden'); }, 300);
 }
 
 function createEditableTaskItem(task, index, categoryKey) {
     const li = document.createElement('li');
     li.className = "draggable-item flex items-center group bg-slate-800/80 p-2 rounded border border-transparent hover:border-slate-600 transition gap-2";
-    li.draggable = true;
-    li.dataset.index = index;
-    li.dataset.category = categoryKey;
-    li.dataset.taskId = task.id;
+    li.draggable = true; li.dataset.index = index; li.dataset.category = categoryKey; li.dataset.taskId = task.id;
 
-    // Handle (D&D)
     const handle = document.createElement('div');
     handle.className = "drag-handle cursor-grab flex-none";
-    handle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>';
+    handle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>';
     
-    // Text Input
     const input = document.createElement('input');
-    input.type = "text";
-    input.value = task.text;
-    input.className = "task-edit-input flex-grow min-w-0 bg-transparent text-sm rounded-md px-2 py-1 border-none outline-none text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-blue-500/50";
+    input.type = "text"; input.value = task.text;
+    input.className = "task-edit-input flex-grow min-w-0 bg-transparent text-sm outline-none text-slate-200";
     input.dataset.taskId = task.id;
 
-    // URL Input
     const urlInput = document.createElement('input');
-    urlInput.type = "text";
-    urlInput.placeholder = "https://...";
-    urlInput.value = task.url || "";
-    urlInput.className = "task-url-input w-24 bg-slate-700/50 text-xs rounded-md px-1 py-1 border border-slate-700 outline-none text-blue-300 placeholder-slate-500 focus:ring-1 focus:ring-blue-500/50";
+    urlInput.type = "text"; urlInput.value = task.url || "";
+    urlInput.className = "task-url-input w-24 bg-slate-700/50 text-xs rounded px-1 outline-none text-blue-300";
     urlInput.dataset.taskId = task.id;
-    urlInput.title = "URL für externen Link (optional)";
 
-    // Timer Input (Minuten)
     const timeInput = document.createElement('input');
-    timeInput.type = "number";
-    timeInput.placeholder = "Min.";
-    timeInput.min = "1";
-    timeInput.max = "180";
-    if(task.duration) timeInput.value = task.duration;
-    timeInput.className = "task-duration-input w-12 text-center bg-slate-700/50 text-xs rounded-md px-1 py-1 border border-slate-700 outline-none text-green-400 placeholder-slate-500 focus:ring-1 focus:ring-green-500/50 tabular-nums";
+    timeInput.type = "number"; if(task.duration) timeInput.value = task.duration;
+    timeInput.className = "task-duration-input w-12 text-center bg-slate-700/50 text-xs rounded px-1 outline-none text-green-400";
     timeInput.dataset.taskId = task.id;
-    timeInput.title = "Dauer in Minuten für Auto-Timer";
 
-    // Delete Btn
     const delBtn = document.createElement('button');
     delBtn.className = "action-icon-btn delete-task-btn flex-none";
-    delBtn.title = "Löschen";
-    delBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
-    
-    delBtn.addEventListener('click', () => {
-        syncEditModalState();
-        editModal.currentData[categoryKey].tasks.splice(index, 1);
-        renderEditModal(editModal.currentData);
-    });
+    delBtn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg>';
+    delBtn.onclick = () => { syncEditModalState(); editModal.currentData[categoryKey].tasks.splice(index, 1); renderEditModal(editModal.currentData); };
 
-    // Drag Events
-    li.addEventListener('dragstart', handleDragStart);
-    li.addEventListener('dragover', handleDragOver);
-    li.addEventListener('drop', handleDrop);
-    li.addEventListener('dragend', handleDragEnd);
+    li.addEventListener('dragstart', handleDragStart); li.addEventListener('dragover', handleDragOver); li.addEventListener('drop', handleDrop); li.addEventListener('dragend', handleDragEnd);
 
-    li.appendChild(handle);
-    li.appendChild(input);
-    li.appendChild(urlInput);
-    li.appendChild(timeInput);
-    li.appendChild(delBtn);
-
+    li.appendChild(handle); li.appendChild(input); li.appendChild(urlInput); li.appendChild(timeInput); li.appendChild(delBtn);
     return li;
 }
 
-
 function renderEditModal(data) {
     editModalContent.innerHTML = '';
-    
     Object.keys(data).forEach(key => {
         const category = data[key];
-        
         const col = document.createElement('div');
         col.className = 'bg-slate-900/50 p-4 rounded-lg flex flex-col h-full min-h-0'; 
         col.dataset.category = key;
         
         const header = document.createElement('h4');
-        header.className = "font-semibold text-white mb-3 text-base border-b border-slate-700 pb-2 flex-none";
+        header.className = "font-semibold text-white mb-3 text-base border-b border-slate-700 pb-2";
         header.textContent = category.title;
         col.appendChild(header);
 
         const listContainer = document.createElement('ul');
-        listContainer.className = "space-y-2 pl-1 text-sm flex-grow overflow-y-auto custom-scroll min-h-0 mb-4 pr-1";
+        listContainer.className = "space-y-2 text-sm flex-grow overflow-y-auto mb-4 pr-1";
         listContainer.dataset.category = key;
-        
-        category.tasks.forEach((task, index) => {
-            const li = createEditableTaskItem(task, index, key);
-            listContainer.appendChild(li);
-        });
+        category.tasks.forEach((task, index) => listContainer.appendChild(createEditableTaskItem(task, index, key)));
         col.appendChild(listContainer);
 
-        // Footer (Add Button)
         const footer = document.createElement('div');
-        footer.className = "flex-none mt-auto pt-2 border-t border-slate-800 flex space-x-2";
+        footer.className = "flex-none mt-auto pt-2 border-t border-slate-800 space-y-2";
         
+        const addWrapper = document.createElement('div');
+        addWrapper.className = "flex space-x-2";
         const addInput = document.createElement('input');
-        addInput.type = "text";
-        addInput.placeholder = "Neue Aufgabe...";
-        addInput.className = "w-full bg-slate-700 text-sm rounded-md px-2 py-1 focus:ring-blue-500 border border-transparent focus:border-blue-500 outline-none text-slate-200";
-        
+        addInput.type = "text"; addInput.placeholder = "Neue Aufgabe...";
+        addInput.className = "w-full bg-slate-700 text-sm rounded px-2 outline-none text-slate-200";
         const addBtn = document.createElement('button');
-        addBtn.textContent = "Add";
-        addBtn.className = "flex-none bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-1 px-3 rounded-md transition";
-        
-        const handleAdd = () => {
-            const text = addInput.value.trim();
-            if(text) {
-                syncEditModalState(); 
-                const newTask = { id: generateUUID(), text: text, checked: false, duration: null, url: null };
-                editModal.currentData[key].tasks.push(newTask);
-                renderEditModal(editModal.currentData);
-                
-                setTimeout(() => {
-                    const lists = editModalContent.querySelectorAll(`ul[data-category="${key}"]`);
-                    const currentList = lists[0];
-                    if(currentList) {
-                        currentList.scrollTop = currentList.scrollHeight;
-                        const inputs = currentList.querySelectorAll('input.task-edit-input');
-                        const lastInput = inputs[inputs.length - 1];
-                        if(lastInput) lastInput.focus();
-                    }
-                }, 50);
-            }
-        };
+        addBtn.textContent = "Add"; addBtn.className = "bg-blue-600 text-xs py-1 px-3 rounded";
+        addBtn.onclick = () => { if(addInput.value.trim()) { syncEditModalState(); editModal.currentData[key].tasks.push({ id: generateUUID(), text: addInput.value.trim(), checked: false, habitifyId: null }); renderEditModal(editModal.currentData); } };
+        addWrapper.appendChild(addInput); addWrapper.appendChild(addBtn);
+        footer.appendChild(addWrapper);
 
-        addBtn.addEventListener('click', handleAdd);
-        addInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') handleAdd(); });
-
-        footer.appendChild(addInput);
-        footer.appendChild(addBtn);
+        if (availableHabits.length > 0) {
+            const hSelect = document.createElement('select');
+            hSelect.className = "w-full bg-blue-900/30 text-[11px] rounded px-2 py-1 text-blue-300 outline-none";
+            hSelect.innerHTML = '<option value="">+ Habitify Import</option>';
+            availableHabits.forEach(h => hSelect.innerHTML += `<option value="${h.id}">${h.name}</option>`);
+            hSelect.onchange = (e) => { if(e.target.value) { syncEditModalState(); editModal.currentData[key].tasks.push({ id: generateUUID(), text: e.target.options[e.target.selectedIndex].text, checked: false, habitifyId: e.target.value }); renderEditModal(editModal.currentData); } };
+            footer.appendChild(hSelect);
+        }
         col.appendChild(footer);
-
         editModalContent.appendChild(col);
     });
 }
 
-function handleDragStart(e) {
-    syncEditModalState(); 
-    draggedItemIndex = parseInt(this.dataset.index);
-    draggedCategoryKey = this.dataset.category;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', draggedItemIndex); 
-    setTimeout(() => { this.classList.add('dragging'); }, 0);
-}
-
-function handleDragOver(e) {
-    e.preventDefault(); 
-    e.dataTransfer.dropEffect = 'move';
-    const item = e.target.closest('.draggable-item');
-    if(item && item !== this) {
-        item.classList.add('drag-over');
-    }
-}
-
-function handleDragEnd(e) {
-    this.classList.remove('dragging');
-    document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('drag-over'));
-}
-
-function handleDrop(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    const targetItem = e.target.closest('.draggable-item');
-    if (targetItem) {
-        const targetIndex = parseInt(targetItem.dataset.index);
-        const targetCategory = targetItem.dataset.category;
-        
-        if (draggedItemIndex === null) return false; // Sollte nicht passieren
-
-        // Cross-category dragging is NOT supported here for simplicity, only reordering within the current column
-        if (draggedCategoryKey === targetCategory) {
-            const tasks = editModal.currentData[draggedCategoryKey].tasks;
-            const itemToMove = tasks[draggedItemIndex];
-            
-            // Fix index if element is moved to itself or invalid
-            if (draggedItemIndex === targetIndex) return false; 
-            
-            tasks.splice(draggedItemIndex, 1);
-            tasks.splice(targetIndex, 0, itemToMove);
-            
-            renderEditModal(editModal.currentData);
-        }
-    }
-    return false;
-}
+function handleDragStart(e) { syncEditModalState(); draggedItemIndex = parseInt(this.dataset.index); draggedCategoryKey = this.dataset.category; setTimeout(() => { this.classList.add('dragging'); }, 0); }
+function handleDragOver(e) { e.preventDefault(); const item = e.target.closest('.draggable-item'); if(item && item !== this) item.classList.add('drag-over'); }
+function handleDragEnd() { this.classList.remove('dragging'); document.querySelectorAll('.draggable-item').forEach(i => i.classList.remove('drag-over')); }
+function handleDrop(e) { e.stopPropagation(); const target = e.target.closest('.draggable-item'); if (target && draggedCategoryKey === target.dataset.category) { const tasks = editModal.currentData[draggedCategoryKey].tasks; const item = tasks[draggedItemIndex]; tasks.splice(draggedItemIndex, 1); tasks.splice(parseInt(target.dataset.index), 0, item); renderEditModal(editModal.currentData); } return false; }
 
 function syncEditModalState() {
      const temp = editModal.currentData;
-     // Sync Titles
-     editModalContent.querySelectorAll('input.task-edit-input').forEach(input => {
-        const taskId = input.dataset.taskId;
-        Object.values(temp).forEach(category => {
-            const task = category.tasks.find(t => t.id === taskId);
-            if (task) task.text = input.value; 
-        });
-     });
-     // Sync URLS
-     editModalContent.querySelectorAll('input.task-url-input').forEach(input => {
-        const taskId = input.dataset.taskId;
-        Object.values(temp).forEach(category => {
-            const task = category.tasks.find(t => t.id === taskId);
-            if (task) task.url = input.value.trim() === "" ? null : input.value.trim();
-        });
-     });
-     // Sync Durations
-     editModalContent.querySelectorAll('input.task-duration-input').forEach(input => {
-        const taskId = input.dataset.taskId;
-        Object.values(temp).forEach(category => {
-            const task = category.tasks.find(t => t.id === taskId);
-            if (task) {
-                const val = parseInt(input.value);
-                task.duration = (!isNaN(val) && val > 0) ? val : null;
-            } 
-        });
-     });
+     editModalContent.querySelectorAll('input.task-edit-input').forEach(i => { const t = Object.values(temp).flatMap(c => c.tasks).find(x => x.id === i.dataset.taskId); if(t) t.text = i.value; });
+     editModalContent.querySelectorAll('input.task-url-input').forEach(i => { const t = Object.values(temp).flatMap(c => c.tasks).find(x => x.id === i.dataset.taskId); if(t) t.url = i.value.trim() || null; });
+     editModalContent.querySelectorAll('input.task-duration-input').forEach(i => { const t = Object.values(temp).flatMap(c => c.tasks).find(x => x.id === i.dataset.taskId); if(t) t.duration = parseInt(i.value) || null; });
 }
 
-function saveEditedChecklist() {
-    syncEditModalState();
-    
-    // Filter leere Tasks
-    Object.values(editModal.currentData).forEach(category => {
-        category.tasks = category.tasks.filter(task => task.text.trim() !== "");
-    });
-    
-    currentChecklistData = editModal.currentData;
-    saveChecklistContent();
-    // Checked state bleibt unverändert, nur die Tasks wurden neu sortiert/geändert.
-    renderChecklist();
-    closeEditModal();
-}
+function saveEditedChecklist() { syncEditModalState(); currentChecklistData = editModal.currentData; saveChecklistContent(); renderChecklist(); closeEditModal(); }
 
-
-/**
- * Registriert alle Event Listener für die Checkliste.
- */
 export function setupChecklistListeners() {
-    document.getElementById('reset-checklist-btn').addEventListener('click', () => {
-        if(confirm("Alle Checkboxen zurücksetzen?")) {
-            Object.values(currentChecklistData).forEach(category => {
-                category.tasks.forEach(task => { task.checked = false; });
-            });
-            saveChecklistState();
-            renderChecklist(); 
-        }
-    });
-    
-    document.getElementById('edit-checklist-btn').addEventListener('click', openEditModal);
-    document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
-    document.getElementById('save-edit-btn').addEventListener('click', saveEditedChecklist);
+    document.getElementById('reset-checklist-btn').onclick = () => { if(confirm("Reset?")) { Object.values(currentChecklistData).forEach(c => c.tasks.forEach(t => t.checked = false)); saveChecklistState(); renderChecklist(); } };
+    document.getElementById('edit-checklist-btn').onclick = openEditModal;
+    document.getElementById('cancel-edit-btn').onclick = closeEditModal;
+    document.getElementById('save-edit-btn').onclick = saveEditedChecklist;
+    document.getElementById('fetch-habitify-btn').onclick = fetchHabitifyHabits;
 }
