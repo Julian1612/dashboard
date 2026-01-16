@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f0f2f5;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .timer-frame {
+            aspect-ratio: 1 / 1;
+            background: white;
+            border-radius: 2.5rem;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12), inset 0 2px 5px rgba(255,255,255,0.5);
+            border: 10px solid #222;
+        }
+
+        #timer-svg {
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        .tick-number {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            fill: #1a1a1a;
+            font-size: 5.5px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-md">
+        <!-- Timer-Gehäuse -->
+        <div class="timer-frame p-6 relative flex items-center justify-center">
+            
+            <svg id="timer-svg" viewBox="0 0 100 100" class="w-full h-full">
+                <!-- Hintergrund-Kreis -->
+                <circle cx="50" cy="50" r="48" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5" />
+                
+                <!-- Hilfskreis für die Skala -->
+                <circle cx="50" cy="50" r="42" fill="none" stroke="#f3f4f6" stroke-width="0.2" />
+
+                <!-- Die Zahlen -->
+                <g id="numbers-group"></g>
+                
+                <!-- Rote Keil-Anzeige (Restzeit) - Absolute Position auf dem Zifferblatt -->
+                <path id="time-wedge" fill="#ef4444" d="M 50 50 L 50 2 A 48 48 0 0 1 50 2 Z" />
+                
+                <!-- Mittelpunkt-Abdeckung -->
+                <circle cx="50" cy="50" r="2" fill="#222" />
+            </svg>
+        </div>
+
+        <!-- Zeit-Anzeige -->
+        <div class="mt-8 text-center">
+            <h1 id="time-text" class="text-7xl font-black text-gray-900 tracking-tighter">00:00</h1>
+        </div>
+
+        <!-- Steuerungs-Buttons -->
+        <div class="mt-8 flex justify-center gap-4">
+            <button id="start-btn" class="bg-gray-900 text-white px-10 py-4 rounded-2xl font-bold hover:bg-black transition-all active:scale-95 shadow-lg">START</button>
+            <button id="stop-btn" class="hidden bg-red-500 text-white px-10 py-4 rounded-2xl font-bold hover:bg-red-600 transition-all active:scale-95 shadow-lg">STOP</button>
+            <button id="reset-btn" class="bg-white text-gray-600 border-2 border-gray-200 px-10 py-4 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95">RESET</button>
+        </div>
+    </div>
+
+    <script>
+        let totalSeconds = 0;
+        let initialSeconds = 0;
+        let timerId = null;
+        let isDragging = false;
+
+        const wedge = document.getElementById('time-wedge');
+        const svg = document.getElementById('timer-svg');
+        const timeText = document.getElementById('time-text');
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const numbersGroup = document.getElementById('numbers-group');
+
+        // Dynamisches Favicon generieren
+        const faviconCanvas = document.createElement('canvas');
+        faviconCanvas.width = 32;
+        faviconCanvas.height = 32;
+        const favCtx = faviconCanvas.getContext('2d');
+
+        function updateFavicon() {
+            favCtx.clearRect(0, 0, 32, 32);
+            
+            // Hintergrund-Kreis des Icons
+            favCtx.beginPath();
+            favCtx.arc(16, 16, 14, 0, 2 * Math.PI);
+            favCtx.fillStyle = '#ffffff';
+            favCtx.fill();
+            favCtx.strokeStyle = '#e5e7eb';
+            favCtx.lineWidth = 1;
+            favCtx.stroke();
+
+            // Favicon Logik: Zeigt relativen Fortschritt (komplett rot am Anfang des Timers)
+            if (totalSeconds > 0 && initialSeconds > 0) {
+                // Hier nutzen wir das Verhältnis von aktueller Zeit zu gesetzter Zeit
+                const ratio = totalSeconds / initialSeconds;
+                const angle = ratio * 2 * Math.PI;
+                
+                favCtx.beginPath();
+                favCtx.moveTo(16, 16);
+                // Start bei 12 Uhr (-PI/2), Ende basierend auf ratio
+                favCtx.arc(16, 16, 14, -Math.PI / 2, angle - Math.PI / 2, false);
+                favCtx.lineTo(16, 16);
+                favCtx.fillStyle = '#ef4444';
+                favCtx.fill();
+            }
+
+            // Kleiner Punkt in der Mitte des Icons
+            favCtx.beginPath();
+            favCtx.arc(16, 16, 2, 0, 2 * Math.PI);
+            favCtx.fillStyle = '#222';
+            favCtx.fill();
+
+            // Link-Tag für Favicon finden oder erstellen
+            let link = document.querySelector("link[rel~='icon']");
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.head.appendChild(link);
+            }
+            link.href = faviconCanvas.toDataURL();
+        }
+
+        function drawNumbers() {
+            const labels = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+            labels.forEach(val => {
+                const angleDeg = (val / 60) * 360 - 90;
+                const angleRad = angleDeg * (Math.PI / 180);
+                const x = 50 + 38 * Math.cos(angleRad);
+                const y = 50 + 38 * Math.sin(angleRad);
+                
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", x);
+                text.setAttribute("y", y);
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("dominant-baseline", "middle");
+                text.setAttribute("class", "tick-number");
+                text.textContent = val === 0 ? '0' : val;
+                numbersGroup.appendChild(text);
+            });
+        }
+
+        function setTimeFromEvent(e) {
+            const rect = svg.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const dx = clientX - centerX;
+            const dy = clientY - centerY;
+            
+            let angle = Math.atan2(dy, dx) + Math.PI / 2;
+            if (angle < 0) angle += 2 * Math.PI;
+            
+            const minutes = Math.round((angle / (2 * Math.PI)) * 60);
+            totalSeconds = Math.min(60, Math.max(0, minutes)) * 60;
+            initialSeconds = totalSeconds; // Setzt die Basis für das Favicon-Rendering
+            updateUI();
+        }
+
+        function updateUI() {
+            const minutes = totalSeconds / 60;
+            const angle = (minutes / 60) * 2 * Math.PI;
+            const x = 50 + 48 * Math.sin(angle);
+            const y = 50 - 48 * Math.cos(angle);
+            const largeArc = angle > Math.PI ? 1 : 0;
+            
+            // Haupt-Timer (Time Timer Logik: Absolute Position)
+            if (totalSeconds <= 0) {
+                wedge.setAttribute('d', 'M 50 50 L 50 2 A 48 48 0 0 1 50 2 Z');
+            } else if (totalSeconds >= 3600) {
+                wedge.setAttribute('d', 'M 50 50 L 50 2 A 48 48 0 1 1 49.9 2 Z');
+            } else {
+                wedge.setAttribute('d', `M 50 50 L 50 2 A 48 48 0 ${largeArc} 1 ${x} ${y} Z`);
+            }
+
+            const displayMins = Math.floor(totalSeconds / 60);
+            const displaySecs = totalSeconds % 60;
+            timeText.textContent = `${displayMins.toString().padStart(2, '0')}:${displaySecs.toString().padStart(2, '0')}`;
+
+            updateTabTitle(displayMins, displaySecs);
+            updateFavicon();
+        }
+
+        function updateTabTitle(m, s) {
+            if (initialSeconds === 0) {
+                document.title = "Pomodoro Timer";
+                return;
+            }
+            const progress = 1 - (totalSeconds / initialSeconds);
+            const barSize = 10;
+            const filledSize = Math.round(progress * barSize);
+            const emptySize = barSize - filledSize;
+            const bar = "█".repeat(filledSize) + "░".repeat(emptySize);
+            document.title = `[${bar}] ${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // Event Listeners
+        svg.addEventListener('mousedown', (e) => {
+            if (timerId) return;
+            isDragging = true;
+            setTimeFromEvent(e);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) setTimeFromEvent(e);
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        svg.addEventListener('touchstart', (e) => {
+            if (timerId) return;
+            isDragging = true;
+            setTimeFromEvent(e);
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) setTimeFromEvent(e);
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => isDragging = false);
+
+        startBtn.addEventListener('click', () => {
+            if (totalSeconds <= 0 || timerId) return;
+            
+            // Falls beim Start initialSeconds noch nicht korrekt gesetzt ist (z.B. durch direkte Eingabe)
+            if (initialSeconds === 0) initialSeconds = totalSeconds;
+
+            startBtn.classList.add('hidden');
+            stopBtn.classList.remove('hidden');
+            
+            timerId = setInterval(() => {
+                totalSeconds--;
+                updateUI();
+                if (totalSeconds <= 0) {
+                    clearInterval(timerId);
+                    timerId = null;
+                    startBtn.classList.remove('hidden');
+                    stopBtn.classList.add('hidden');
+                    timeText.classList.add('text-red-600', 'animate-pulse');
+                    setTimeout(() => timeText.classList.remove('text-red-600', 'animate-pulse'), 5000);
+                }
+            }, 1000);
+        });
+
+        stopBtn.addEventListener('click', () => {
+            clearInterval(timerId);
+            timerId = null;
+            startBtn.classList.remove('hidden');
+            stopBtn.classList.add('hidden');
+        });
+
+        resetBtn.addEventListener('click', () => {
+            clearInterval(timerId);
+            timerId = null;
+            totalSeconds = 0;
+            initialSeconds = 0;
+            startBtn.classList.remove('hidden');
+            stopBtn.classList.add('hidden');
+            timeText.classList.remove('text-red-600', 'animate-pulse');
+            updateUI();
+        });
+
+        drawNumbers();
+        updateUI();
+
+    </script>
+</body>
+</html>
