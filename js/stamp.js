@@ -2,7 +2,7 @@
 
 import { VisualTimer } from './visual-timer.js';
 import { triggerConfetti } from './confetti.js';
-import { loadNewTrack, playMusic } from './music.js';
+import { loadNewTrack, playMusic, isMusicPlaying, getCurrentTrackSrc } from './music.js'; // Helper importieren
 
 // ==========================================
 // KONFIGURATION & SOUNDS
@@ -87,6 +87,19 @@ function handleActionClick() {
     if (currentStep === 0) {
         const slider = document.getElementById('overwhelm-slider');
         sessionData.overwhelm = slider.value;
+        
+        // --- LOGIC FIX START ---
+        // Prüfen, ob bereits Musik läuft UND ob es Brown Noise ist
+        const currentSrc = getCurrentTrackSrc();
+        // Wir vergleichen sicherheitshalber nur die Track-ID, falls URL-Parameter variieren
+        const isBrownNoise = currentSrc && currentSrc.includes("1107084022");
+        
+        if (isMusicPlaying() && isBrownNoise) {
+             // Wenn Brown Noise schon läuft, überspringen wir die Abfrage
+             loadStep(1);
+             return;
+        }
+        // --- LOGIC FIX END ---
         
         sysTitle.textContent = "Fokus Musik";
         sysMessage.textContent = "Soll 'Brown Noise' zur Konzentration gestartet werden?";
@@ -277,7 +290,7 @@ function renderMomentum() {
     actionBtn.textContent = "BEENDEN";
     actionBtn.className = "bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 px-8 rounded-lg shadow-lg transition-all border border-slate-700 uppercase tracking-widest";
     
-    // UI Inhalte (Rechts) - MASSIV GESTRAFFTES LAYOUT
+    // UI Inhalte (Rechts) - GESTRAFFTES LAYOUT
     contentArea.innerHTML = `
         <div class="flex flex-col h-full overflow-hidden justify-between animate-fade-in">
             <div class="space-y-2 flex-shrink-0">
@@ -292,7 +305,9 @@ function renderMomentum() {
                 </div>
             </div>
             
-            <div class="flex-grow min-h-2"></div> <div class="pt-2 border-t border-slate-800/50 flex-shrink-0">
+            <div class="flex-grow min-h-2"></div>
+
+            <div class="pt-2 border-t border-slate-800/50 flex-shrink-0">
                 <label class="text-[9px] uppercase font-bold text-teal-600 block mb-1 tracking-[0.2em]">The Bridge (Next Step)</label>
                 <input type="text" id="bridge-input" autocomplete="off" placeholder="Nächster logischer Schritt / Notiz..." 
                     class="w-full bg-slate-950 text-slate-300 p-2 rounded-lg border border-slate-800 focus:border-teal-500/30 focus:ring-1 focus:ring-teal-500/10 outline-none text-xs transition-all shadow-inner font-light">
@@ -319,7 +334,6 @@ function startTimerWatcher() {
         if (seconds > 0) {
             visualTimer.setTime(seconds - 1);
             if (visualTimer.totalSeconds === 0) {
-                 // GONG SOUND (Sanft)
                  const gong = new Audio(GENTLE_WAKE_URL);
                  gong.volume = 0.6; 
                  gong.play().catch(() => {});
@@ -351,10 +365,8 @@ function enterFocusMode() {
 function exitFocusMode() {
     isFocusModeActive = false;
     focusOverlay.classList.add('opacity-0');
-    
     setTimeout(() => {
         focusOverlay.classList.add('hidden');
-        // SVG zurück in den linken Container schieben (VOR den Hint)
         const hint = document.getElementById('timer-hint-text');
         originalTimerContainer.insertBefore(timerSvgWrapper, hint);
     }, 500); 
@@ -399,7 +411,7 @@ function closeSystemModal() {
     setTimeout(() => { sysModal.classList.add('hidden'); }, 200);
 }
 
-function updateHeader(badgeText, titleText, badgeColorClass, titleColorClass) {
+function updateHeader(badgeText, titleText) {
     phaseBadge.textContent = badgeText;
     phaseBadge.className = `px-3 py-1 rounded-md text-[10px] font-bold bg-slate-800 text-teal-500 border border-slate-700/50 uppercase tracking-[0.15em] shadow-sm transition-colors duration-500`;
     phaseName.textContent = titleText;

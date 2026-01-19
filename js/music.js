@@ -27,27 +27,18 @@ let draggedTrackIndex = null;
 
 // --- INITIALISIERUNG & DOM MANIPULATION ---
 
-/**
- * Wandelt das UI in den minimalistischen Modus um:
- * Versteckt den Iframe und fügt den Play/Pause Button hinzu.
- */
 function setupMinimalistUI() {
-    // 1. Iframe-Container verstecken (aber im DOM lassen für Widget-API)
     const playerContainer = soundcloudPlayerIframe.parentElement;
     if (playerContainer) {
-        // Wir machen ihn unsichtbar und ohne Höhe, damit er keinen Platz wegnimmt
         playerContainer.style.height = '0';
         playerContainer.style.opacity = '0';
         playerContainer.style.overflow = 'hidden';
         playerContainer.style.marginTop = '0';
-        // Wir fügen Platzhalter hinzu, damit die Karte nicht leer wirkt
         playerContainer.style.flexGrow = '0'; 
     }
 
-    // 2. Play/Pause Button injizieren
     const controlsContainer = document.getElementById('sc-next')?.parentElement;
     if (controlsContainer && !document.getElementById('sc-play-pause')) {
-        // Container zentrieren und vergrößern für Fokus
         controlsContainer.className = "flex-grow flex justify-center items-center gap-8 h-full";
         
         const playBtn = document.createElement('button');
@@ -58,7 +49,6 @@ function setupMinimalistUI() {
             <svg id="icon-pause" class="w-8 h-8 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
         `;
         
-        // Button zwischen Prev und Next einfügen
         const nextBtn = document.getElementById('sc-next');
         controlsContainer.insertBefore(playBtn, nextBtn);
         
@@ -89,14 +79,12 @@ export function renderSCButtons() {
     
     currentSCTracks.forEach((track, index) => {
         const button = document.createElement('button');
-        // Minimalistisches Button-Design (Teal active state)
         button.className = `player-btn text-[10px] uppercase font-bold tracking-wider py-1.5 px-3 rounded-md transition-all border ${index === 0 ? 'active border-teal-500 bg-teal-500/10 text-teal-400' : 'border-slate-800 bg-slate-900 text-slate-500 hover:text-slate-300'}`;
         button.textContent = track.name;
         button.dataset.src = track.url;
         button.dataset.trackId = track.id; 
         
         button.addEventListener('click', (e) => {
-            // Active State umschalten
             document.querySelectorAll('.player-btn').forEach(btn => {
                 btn.className = 'player-btn text-[10px] uppercase font-bold tracking-wider py-1.5 px-3 rounded-md transition-all border border-slate-800 bg-slate-900 text-slate-500 hover:text-slate-300';
             });
@@ -119,12 +107,11 @@ export function initializeSCWidget() {
     if (typeof SC !== 'undefined' && typeof SC.Widget === 'function') {
         scWidget = SC.Widget(soundcloudPlayerIframe);
         
-        // Events für Play/Pause Status-Sync
         scWidget.bind(SC.Widget.Events.PLAY, () => updatePlayButtonState(true));
         scWidget.bind(SC.Widget.Events.PAUSE, () => updatePlayButtonState(false));
         scWidget.bind(SC.Widget.Events.FINISH, () => updatePlayButtonState(false));
         
-        setupMinimalistUI(); // UI anpassen
+        setupMinimalistUI(); 
     }
 }
 
@@ -138,7 +125,7 @@ function updatePlayButtonState(playing) {
         if (playing) {
             iconPlay.classList.add('hidden');
             iconPause.classList.remove('hidden');
-            if(playBtn) playBtn.classList.add('animate-pulse-slow'); // Optionaler Effekt
+            if(playBtn) playBtn.classList.add('animate-pulse-slow'); 
         } else {
             iconPlay.classList.remove('hidden');
             iconPause.classList.add('hidden');
@@ -160,7 +147,7 @@ export function loadNewTrack(embedUrl) {
         const trackUrl = extractApiUrl(embedUrl);
         if (trackUrl) {
             scWidget.load(trackUrl, { 
-                auto_play: true, // Auto-Play beim Senderwechsel für smooth experience
+                auto_play: true, 
                 show_artwork: false,
                 visual: false 
             });
@@ -180,6 +167,16 @@ export function pauseMusic() {
     if (scWidget) scWidget.pause();
 }
 
+// --- NEU: Helper für S.T.A.M.P. Logik ---
+export function isMusicPlaying() {
+    return isPlaying;
+}
+
+export function getCurrentTrackSrc() {
+    return soundcloudPlayerIframe.src;
+}
+// ----------------------------------------
+
 // --- HELPER ---
 
 function extractSoundCloudEmbedUrl(input) {
@@ -193,7 +190,7 @@ function extractApiUrl(embedUrl) {
     try { return decodeURIComponent(new URL(embedUrl).searchParams.get('url')); } catch (e) { return null; }
 }
 
-// --- EDIT MODAL & DRAG/DROP (Logic unchanged, styled in CSS/HTML) ---
+// --- EDIT MODAL & DRAG/DROP ---
 
 function openSCEditModal() {
     scEditModal.currentData = JSON.parse(JSON.stringify(currentSCTracks));
@@ -212,10 +209,6 @@ function closeSCEditModal() {
     newScUrlInput.value = "";
     draggedTrackIndex = null;
 }
-
-// ... Drag & Drop Handler (handleDragStart, etc.) bleiben identisch zu vorher ...
-// (Ich kürze diesen Block hier nicht, aber er entspricht der Logik aus dem vorherigen Artefakt, 
-// da sich nur das Frontend-Design geändert hat).
 
 function handleDragStart(e) {
     syncSCEditModalState(); draggedTrackIndex = parseInt(this.dataset.index);
@@ -324,7 +317,6 @@ function addSCTrack() {
 
 function saveEditedSCTracks() {
     syncSCEditModalState();
-    // Validierung und Speicherung
     const validTracks = [];
     scEditModal.currentData.forEach(track => {
         const cleanedUrl = extractSoundCloudEmbedUrl(track.url);
