@@ -159,7 +159,7 @@ export function renderChecklist() {
             }
             // Timer Button wurde hier entfernt
 
-            li.appendChild(rightSide);
+
             targetList.appendChild(li);
             checkbox.addEventListener('change', handleTaskChange);
         });
