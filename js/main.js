@@ -3,27 +3,23 @@
 import { initConfetti } from './confetti.js';
 import { loadSCTracks, renderSCButtons, initializeSCWidget, setupMusicListeners } from './music.js';
 import { loadChecklistData, renderChecklist, setupChecklistListeners } from './checklist.js';
+import { initStamp } from './stamp.js';
 
-/**
- * Startpunkt der Anwendung. 
- * Wird ausgeführt, sobald das gesamte HTML geladen und geparst wurde.
- */
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Laden der gespeicherten Zustände
+    // 1. Laden & Rendern
     loadSCTracks();
     loadChecklistData(); 
-    
-    // 2. Initialisieren der visuellen Komponenten/Widgets
-    renderSCButtons(); // Muss vor initializeSCWidget() aufgerufen werden
+    renderSCButtons(); 
     renderChecklist();
     initConfetti(); 
 
-    // 3. Initialisieren des externen Widgets
+    // 2. S.T.A.M.P. Init
+    initStamp();
+
+    // 3. Listener
     initializeSCWidget();
-    
-    // 4. Registrieren aller Event Listener
     setupMusicListeners();
     setupChecklistListeners();
     
-    console.log("Fokus Tag Dashboard Pro gestartet.");
+    console.log("Fokus Dashboard Pro - S.T.A.M.P. Edition initialized.");
 });
