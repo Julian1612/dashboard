@@ -33,6 +33,7 @@ export class VisualTimer {
 
     /**
      * Zeichnet die Minutenstriche und Zahlen auf das Ziffernblatt.
+     * Angepasst für das "Deep Focus" Design (Dunkle Farben, feine Linien).
      */
     drawFace() {
         this.faceGroup.innerHTML = '';
@@ -53,7 +54,8 @@ export class VisualTimer {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("x1", x1); line.setAttribute("y1", y1);
             line.setAttribute("x2", x2); line.setAttribute("y2", y2);
-            line.setAttribute("stroke", "#1f2937"); 
+            // Design-Update: Slate-600 für subtilen Kontrast auf dunklem Grund
+            line.setAttribute("stroke", "#475569"); 
             line.setAttribute("stroke-width", width);
             line.setAttribute("stroke-linecap", "round");
             this.faceGroup.appendChild(line);
@@ -76,9 +78,10 @@ export class VisualTimer {
             text.setAttribute("text-anchor", "middle");
             text.setAttribute("dominant-baseline", "middle");
             text.setAttribute("font-family", "Inter, sans-serif");
-            text.setAttribute("font-size", "7"); 
-            text.setAttribute("font-weight", "800");
-            text.setAttribute("fill", "#1f2937"); 
+            text.setAttribute("font-size", "6.5"); // Etwas feiner
+            text.setAttribute("font-weight", "500"); // Medium statt Bold für Eleganz
+            // Design-Update: Slate-400 für gute Lesbarkeit ohne zu blenden
+            text.setAttribute("fill", "#94a3b8"); 
             text.textContent = num.toString();
             
             this.faceGroup.appendChild(text);
@@ -129,7 +132,6 @@ export class VisualTimer {
         this.totalSeconds = Math.round(percent * 3600);
         
         // WICHTIG: Wenn der User zieht, setzen wir die "Basis" für das Favicon neu.
-        // Damit ist "Voll" immer das, was der User gerade einstellt.
         this.initialSeconds = this.totalSeconds; 
         
         this.draw();
@@ -139,12 +141,11 @@ export class VisualTimer {
 
     /**
      * Setzt die Zeit (Tick-Logik).
-     * Hier ändern wir NICHT initialSeconds, damit das Favicon relativ zur Startzeit schrumpft.
      */
     setTime(seconds) {
         this.totalSeconds = Math.max(0, Math.min(3600, seconds));
         
-        // Falls durch irgendeinen Reset die Zeit größer als Initial ist, passen wir an.
+        // Falls durch Reset die Zeit größer als Initial ist, anpassen.
         if (this.totalSeconds > this.initialSeconds) {
             this.initialSeconds = this.totalSeconds;
         }
@@ -193,34 +194,32 @@ export class VisualTimer {
 
         ctx.clearRect(0, 0, w, h);
 
-        // Hintergrund (Weißer Kreis)
+        // Hintergrund (Dunkles Slate-950 für Dark Mode)
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#020617'; 
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = '#e2e8f0'; // Slate-200 Rand
+        ctx.strokeStyle = '#1e293b'; // Slate-800 Rand
         ctx.stroke();
 
-        // Roter Keil (Relativ zur Initialzeit!)
+        // Roter Keil (Bleibt Signalrot)
         if (this.totalSeconds > 0 && this.initialSeconds > 0) {
             const ratio = this.totalSeconds / this.initialSeconds;
-            // Voller Kreis = 100%, Start bei -90deg (12 Uhr)
             const endAngle = (ratio * 2 * Math.PI) - (Math.PI / 2);
 
             ctx.beginPath();
             ctx.moveTo(cx, cy);
-            // Wir zeichnen von 12 Uhr im Uhrzeigersinn bis zum aktuellen Stand
             ctx.arc(cx, cy, r, -Math.PI / 2, endAngle, false);
             ctx.lineTo(cx, cy);
             ctx.fillStyle = '#ef4444'; // Red-500
             ctx.fill();
         } 
         
-        // Kleiner Mittelpunkt für Look & Feel
+        // Kleiner Mittelpunkt (Helles Grau als Kontrast)
         ctx.beginPath();
         ctx.arc(cx, cy, 2, 0, 2 * Math.PI);
-        ctx.fillStyle = '#1e293b';
+        ctx.fillStyle = '#cbd5e1'; // Slate-300
         ctx.fill();
 
         // Link Tag updaten

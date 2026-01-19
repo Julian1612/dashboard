@@ -1,35 +1,78 @@
+/* css/style.css - Deep Focus Theme */
+
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #0f172a; /* Slate-900 */
-    color: #cbd5e1; /* Slate-300 */
+    background-color: #020617; /* Slate-950: Tiefstes Dunkelblau */
+    color: #94a3b8; /* Slate-400: Gedämpfter Text für weniger Augenstress */
 }
+
 #app-container { width: 100%; max-width: 100%; margin: auto; }
 html, body { height: 100%; overflow: hidden; }
 
-.custom-checkbox:checked {
-    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
-    background-color: #22c55e;
-    border-color: #22c55e;
+/* Custom Checkbox - Teal Accent */
+.custom-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #0f172a; /* Slate-900 */
+    border: 1px solid #334155; /* Slate-700 */
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
 }
+
+.custom-checkbox:checked {
+    background-color: #0d9488; /* Teal-600 */
+    border-color: #0d9488;
+    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    box-shadow: 0 0 10px rgba(13, 148, 136, 0.4); /* Sanftes Glühen */
+}
+
 .custom-checkbox:checked + label {
     text-decoration: line-through;
-    color: #64748b;
+    color: #475569; /* Slate-600 - fast unsichtbar wenn erledigt */
+    transition: color 0.3s ease;
 }
 
-.card { background-color: #1e293b; border-radius: 0.75rem; border: 1px solid #334155; }
+/* Card Styling - High End Dark Mode */
+.card {
+    background-color: #0f172a; /* Slate-900 */
+    border-radius: 0.75rem;
+    border: 1px solid #1e293b; /* Slate-800: Subtiler Rand */
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6); /* Tiefer Schatten */
+}
+
 .timer-progress-circle { transform: rotate(-90deg); transition: stroke-dashoffset 0.5s linear; }
 
+/* Player & Control Buttons */
 .player-btn, .timer-setting-btn, .player-control-btn {
-    background-color: #334155; color: #cbd5e1; transition: all 0.2s ease-in-out;
+    background-color: #1e293b; /* Slate-800 */
+    color: #94a3b8; /* Slate-400 */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
 }
-.player-control-btn:hover { background-color: #475569; }
-.player-btn.active, .timer-setting-btn.active { background-color: #22c55e; color: white; }
 
-/* Custom scrollbar Styles */
-.custom-scroll::-webkit-scrollbar { width: 6px; }
-.custom-scroll::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); }
-.custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-.custom-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
+.player-control-btn:hover, .player-btn:hover {
+    background-color: #334155; /* Slate-700 */
+    color: #f1f5f9; /* Slate-100 */
+    border-color: #475569;
+}
+
+/* Aktiver Musik-Button: Teal statt Grün */
+.player-btn.active {
+    background-color: #0f766e; /* Teal-700 */
+    color: #ccfbf1; /* Teal-100 */
+    border-color: #14b8a6; /* Teal-500 */
+    box-shadow: 0 0 15px rgba(20, 184, 166, 0.15);
+}
+
+/* Custom Scrollbar - Dark & Elegant */
+.custom-scroll::-webkit-scrollbar { width: 5px; }
+.custom-scroll::-webkit-scrollbar-track { background: rgba(2, 6, 23, 0.5); }
+.custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+.custom-scroll::-webkit-scrollbar-thumb:hover { background: #334155; }
 
 #confetti-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
 
@@ -42,30 +85,61 @@ input[type=number] { -moz-appearance: textfield; }
     #checklist-container { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* Action Icons (Bearbeiten/Löschen) */
 .action-icon-btn {
-    color: #94a3b8; cursor: pointer; transition: color 0.2s, background-color 0.2s;
-    padding: 4px; border-radius: 4px;
+    color: #475569; /* Slate-600 */
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 4px;
+    border-radius: 4px;
 }
-.action-icon-btn:hover { background-color: #334155; color: #f1f5f9; }
-.delete-task-btn:hover { color: #ef4444; background-color: rgba(239, 68, 68, 0.1); }
+.action-icon-btn:hover {
+    background-color: #1e293b;
+    color: #e2e8f0;
+}
+.delete-task-btn:hover {
+    color: #f87171; /* Red-400 */
+    background-color: rgba(239, 68, 68, 0.1);
+}
 
 /* Drag and Drop Styles */
 .draggable-item { cursor: grab; user-select: none; }
-.draggable-item.dragging { opacity: 0.5; background-color: #334155; cursor: grabbing; }
-.drag-handle { cursor: grab; color: #64748b; padding: 4px; }
+.draggable-item.dragging {
+    opacity: 0.6;
+    background-color: #1e293b;
+    border: 1px dashed #334155;
+    cursor: grabbing;
+    transform: scale(0.98);
+}
+.drag-handle { cursor: grab; color: #475569; padding: 4px; }
 .drag-handle:hover { color: #94a3b8; }
-.drag-over { border: 1px dashed #22c55e; background-color: rgba(34, 197, 94, 0.1); }
 
-.task-edit-input:focus, .task-duration-input:focus, .task-url-input:focus { background-color: rgba(30, 41, 59, 0.5); }
-
-/* Quick Start Button Style */
-.task-timer-btn {
-    opacity: 0.6; transition: all 0.2s;
+/* Drop Target Highlight - Teal */
+.drag-over {
+    border: 1px dashed #14b8a6; /* Teal-500 */
+    background-color: rgba(20, 184, 166, 0.05);
 }
-.task-timer-btn:hover { opacity: 1; transform: scale(1.05); color: #4ade80; }
 
-/* Link Button Style */
+/* Input Focus States */
+.task-edit-input:focus, .task-duration-input:focus, .task-url-input:focus {
+    background-color: #020617;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+/* Link Button Style - Teal Neon */
 .task-link-btn {
-    opacity: 0.6; transition: all 0.2s; color: #38bdf8;
+    opacity: 0.7;
+    transition: all 0.2s;
+    color: #2dd4bf; /* Teal-400 */
+    background-color: rgba(45, 212, 191, 0.05);
+    border: 1px solid rgba(45, 212, 191, 0.2);
 }
-.task-link-btn:hover { opacity: 1; transform: scale(1.1); color: #0ea5e9; }
+.task-link-btn:hover {
+    opacity: 1;
+    transform: scale(1.05);
+    color: #5eead4; /* Teal-300 */
+    border-color: #2dd4bf;
+    background-color: rgba(45, 212, 191, 0.15);
+    box-shadow: 0 0 10px rgba(45, 212, 191, 0.2);
+}
