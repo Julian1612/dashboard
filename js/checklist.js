@@ -2,7 +2,6 @@
 
 import { generateUUID } from './utils.js';
 import { triggerConfetti } from './confetti.js';
-import { askToStartMusic } from './timer.js'; 
 
 // DOM-Elemente
 const morningList = document.getElementById('morgen-start-list');
@@ -158,23 +157,8 @@ export function renderChecklist() {
                 `;
                 rightSide.appendChild(linkBtn);
             }
+            // Timer Button wurde hier entfernt
 
-            // PLAY BUTTON
-            if (task.duration && task.duration > 0) {
-                const playBtn = document.createElement('button');
-                playBtn.className = "task-timer-btn flex items-center gap-1 text-xs bg-slate-800 hover:bg-slate-700 text-green-500 px-2 py-1 rounded border border-slate-700";
-                playBtn.title = `${task.duration} Min. Timer starten`;
-                playBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                    <span>${task.duration}m</span>
-                `;
-                playBtn.onclick = (e) => {
-                    e.preventDefault();
-                    askToStartMusic(task.id, task.duration);
-                };
-                rightSide.appendChild(playBtn);
-            }
-            
             li.appendChild(rightSide);
             targetList.appendChild(li);
             checkbox.addEventListener('change', handleTaskChange);
@@ -197,15 +181,13 @@ function handleTaskChange(e) {
         if(isChecked) {
             // Konfetti-Partikel für abgehakten Task
             const rect = e.target.getBoundingClientRect();
-            // Erzeugen der Partikel-Animation (simuliert, da Confetti-Objekt nicht global ist)
-            // Die Konfetti-Logik läuft in confetti.js und wird nur per triggerConfetti() oder indirekt durch den Timer-End-Handler ausgelöst.
         }
     }
     updateProgress();
 }
 
 /**
- * Funktion, die vom Timer-Modul aufgerufen wird, um eine Task abzuhaken.
+ * Funktion, um eine Task als erledigt zu markieren (extern aufrufbar).
  * @param {string} taskId - ID der abzuhakenden Task.
  */
 export function handleTaskCompletion(taskId) {
@@ -293,17 +275,6 @@ function createEditableTaskItem(task, index, categoryKey) {
     urlInput.dataset.taskId = task.id;
     urlInput.title = "URL für externen Link (optional)";
 
-    // Timer Input (Minuten)
-    const timeInput = document.createElement('input');
-    timeInput.type = "number";
-    timeInput.placeholder = "Min.";
-    timeInput.min = "1";
-    timeInput.max = "180";
-    if(task.duration) timeInput.value = task.duration;
-    timeInput.className = "task-duration-input w-12 text-center bg-slate-700/50 text-xs rounded-md px-1 py-1 border border-slate-700 outline-none text-green-400 placeholder-slate-500 focus:ring-1 focus:ring-green-500/50 tabular-nums";
-    timeInput.dataset.taskId = task.id;
-    timeInput.title = "Dauer in Minuten für Auto-Timer";
-
     // Delete Btn
     const delBtn = document.createElement('button');
     delBtn.className = "action-icon-btn delete-task-btn flex-none";
@@ -325,7 +296,7 @@ function createEditableTaskItem(task, index, categoryKey) {
     li.appendChild(handle);
     li.appendChild(input);
     li.appendChild(urlInput);
-    li.appendChild(timeInput);
+    // Timer Input removed
     li.appendChild(delBtn);
 
     return li;
@@ -434,14 +405,12 @@ function handleDrop(e) {
         const targetIndex = parseInt(targetItem.dataset.index);
         const targetCategory = targetItem.dataset.category;
         
-        if (draggedItemIndex === null) return false; // Sollte nicht passieren
+        if (draggedItemIndex === null) return false; 
 
-        // Cross-category dragging is NOT supported here for simplicity, only reordering within the current column
         if (draggedCategoryKey === targetCategory) {
             const tasks = editModal.currentData[draggedCategoryKey].tasks;
             const itemToMove = tasks[draggedItemIndex];
             
-            // Fix index if element is moved to itself or invalid
             if (draggedItemIndex === targetIndex) return false; 
             
             tasks.splice(draggedItemIndex, 1);
@@ -471,17 +440,6 @@ function syncEditModalState() {
             if (task) task.url = input.value.trim() === "" ? null : input.value.trim();
         });
      });
-     // Sync Durations
-     editModalContent.querySelectorAll('input.task-duration-input').forEach(input => {
-        const taskId = input.dataset.taskId;
-        Object.values(temp).forEach(category => {
-            const task = category.tasks.find(t => t.id === taskId);
-            if (task) {
-                const val = parseInt(input.value);
-                task.duration = (!isNaN(val) && val > 0) ? val : null;
-            } 
-        });
-     });
 }
 
 function saveEditedChecklist() {
@@ -494,7 +452,6 @@ function saveEditedChecklist() {
     
     currentChecklistData = editModal.currentData;
     saveChecklistContent();
-    // Checked state bleibt unverändert, nur die Tasks wurden neu sortiert/geändert.
     renderChecklist();
     closeEditModal();
 }
