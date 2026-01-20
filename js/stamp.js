@@ -11,7 +11,7 @@ import { loadNewTrack, playMusic, isMusicPlaying, getCurrentTrackSrc } from './m
 const GENTLE_WAKE_URL = "https://cdn.pixabay.com/audio/2021/08/04/audio_3d3c760630.mp3"; 
 const BROWN_NOISE_URL = "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1107084022&color=%2322c55e&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true";
 
-// Fibonacci Stufen & Strategien
+// Fibonacci Stufen & Strategien (Optimiert)
 const FIB_LEVELS = [
     { val: 1, title: "Trivial", duration: 60, tip: "Du fühlst dich fit und die Aufgabe ist klar? Nutze das Momentum für 60 Min. Deep Work.", color: "text-teal-400" },
     { val: 2, title: "Einfach", duration: 45, tip: "Routine-Aufgabe mit wenig Widerstand? 45 Min. sind ideal für stetigen Fortschritt.", color: "text-teal-300" },
@@ -32,6 +32,7 @@ const resetBtn = document.getElementById('stamp-reset-btn');
 const phaseBadge = document.getElementById('stamp-phase-badge');
 const phaseName = document.getElementById('stamp-phase-name');
 
+// Timer Wrapper: Das Element, das wir hin und her bewegen
 const timerSvgWrapper = document.querySelector('#original-timer-container > div'); 
 const originalTimerContainer = document.getElementById('original-timer-container');
 const leftActions = document.getElementById('stamp-left-actions'); 
@@ -41,6 +42,12 @@ const focusOverlay = document.getElementById('focus-overlay');
 const focusGoalDisplay = document.getElementById('focus-goal-display');
 const focusStepDisplay = document.getElementById('focus-step-display');
 const exitFocusBtn = document.getElementById('exit-focus-btn');
+
+// NEUE BUTTONS IM OVERLAY
+const focusToggleBtn = document.getElementById('focus-toggle-btn');
+const focusResetBtn = document.getElementById('focus-reset-timer-btn');
+const iconPause = document.getElementById('focus-icon-pause');
+const iconPlay = document.getElementById('focus-icon-play');
 
 const sysModal = document.getElementById('system-modal');
 const sysModalPanel = document.getElementById('system-modal-panel');
@@ -61,6 +68,7 @@ let currentStep = 0;
 let visualTimer = null;
 let timerWatcherInterval = null;
 let isFocusModeActive = false;
+let isFocusPaused = false; 
 
 let sessionData = {
     complexity: 3, 
@@ -70,7 +78,7 @@ let sessionData = {
 };
 
 // ==========================================
-// ADAPTIVE TEXT LOGIK (STRICT MVP + SMART SUPPORT)
+// ADAPTIVE TEXT LOGIK (SMART HELP)
 // ==========================================
 
 function getAdaptiveTuneConfig() {
@@ -179,7 +187,34 @@ export function initStamp() {
     exitFocusBtn.addEventListener('click', exitFocusMode);
     actionBtn.addEventListener('click', handleActionClick);
     
+    // NEUE LISTENER FÜR PAUSE / RESET (Focus Overlay)
+    if(focusToggleBtn) focusToggleBtn.addEventListener('click', toggleFocusTimer);
+    if(focusResetBtn) focusResetBtn.addEventListener('click', resetFocusTimer);
+    
     loadStep(0);
+}
+
+function toggleFocusTimer() {
+    isFocusPaused = !isFocusPaused;
+    updateFocusControls();
+}
+
+function resetFocusTimer() {
+    if (sessionData.recommendedTime > 0) {
+        visualTimer.setTime(sessionData.recommendedTime * 60);
+        isFocusPaused = true; // Auto-Pause nach Reset
+        updateFocusControls();
+    }
+}
+
+function updateFocusControls() {
+    if (isFocusPaused) {
+        iconPause.classList.add('hidden');
+        iconPlay.classList.remove('hidden');
+    } else {
+        iconPause.classList.remove('hidden');
+        iconPlay.classList.add('hidden');
+    }
 }
 
 // ==========================================
@@ -478,13 +513,18 @@ function renderMomentum() {
     if (sessionData.recommendedTime > 0) {
         visualTimer.setTime(sessionData.recommendedTime * 60);
     }
-
+    
+    isFocusPaused = false;
+    updateFocusControls();
     startTimerWatcher();
 }
 
 function startTimerWatcher() {
     if (timerWatcherInterval) clearInterval(timerWatcherInterval);
     timerWatcherInterval = setInterval(() => {
+        
+        if (isFocusPaused) return; // PAUSE LOGIK
+
         let seconds = visualTimer.totalSeconds;
         if (seconds > 0) {
             visualTimer.setTime(seconds - 1);
@@ -503,7 +543,7 @@ function startTimerWatcher() {
 }
 
 // ==========================================
-// FOCUS MODE LOGIC
+// FOCUS MODE LOGIC (HIER WIRD DER TIMER VERGRÖSSERT)
 // ==========================================
 
 function enterFocusMode() {
@@ -512,7 +552,14 @@ function enterFocusMode() {
     focusGoalDisplay.textContent = sessionData.goal;
     focusStepDisplay.textContent = sessionData.atomicStep || "Fokus";
     
+    // 1. Klasse "klein" entfernen
+    timerSvgWrapper.classList.remove('w-48', 'h-48');
+    // 2. Klasse "groß" hinzufügen (füllt den neuen Container)
+    timerSvgWrapper.classList.add('w-full', 'h-full');
+    
+    // 3. In das große Overlay verschieben
     focusTimerTarget.appendChild(timerSvgWrapper); 
+    
     focusOverlay.classList.remove('hidden');
     setTimeout(() => { focusOverlay.classList.remove('opacity-0'); }, 10);
 }
@@ -522,6 +569,12 @@ function exitFocusMode() {
     focusOverlay.classList.add('opacity-0');
     setTimeout(() => {
         focusOverlay.classList.add('hidden');
+        
+        // 1. Zurücksetzen auf "klein"
+        timerSvgWrapper.classList.remove('w-full', 'h-full');
+        timerSvgWrapper.classList.add('w-48', 'h-48');
+        
+        // 2. Zurück an den Ursprung
         const hint = document.getElementById('timer-hint-text');
         originalTimerContainer.insertBefore(timerSvgWrapper, hint);
     }, 500); 
