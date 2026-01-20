@@ -13,13 +13,14 @@ const BROWN_NOISE_URL = "https://w.soundcloud.com/player/?url=https%3A//api.soun
 
 // Fibonacci Stufen & Strategien (Optimiert)
 const FIB_LEVELS = [
-    { val: 1, title: "Trivial", duration: 60, tip: "Du fühlst dich fit und die Aufgabe ist klar? Nutze das Momentum für 60 Min. Deep Work.", color: "text-teal-400" },
-    { val: 2, title: "Einfach", duration: 45, tip: "Routine-Aufgabe mit wenig Widerstand? 45 Min. sind ideal für stetigen Fortschritt.", color: "text-teal-300" },
-    { val: 3, title: "Machbar", duration: 30, tip: "Standard-Aufgabe, aber der Anfang fällt schwer? Ein 30 Min. Sprint hilft dir rein.", color: "text-blue-300" },
-    { val: 5, title: "Anspruchsvoll", duration: 20, tip: "Respekt vor der Aufgabe? Salami-Taktik: Wir machen nur 20 Min. für den ersten Teil.", color: "text-yellow-300" },
-    { val: 8, title: "Komplex", duration: 15, tip: "Perfektionismus blockiert dich? Egal wie schlecht: Schreibe 15 Min. eine 'Grobe Rohfassung'.", color: "text-orange-300" },
-    { val: 13, title: "Schwer", duration: 10, tip: "Der Berg wirkt riesig? Blende das Gesamtziel aus. Nur 10 Min. Start-Impuls suchen.", color: "text-red-300" },
-    { val: 21, title: "Blockade", duration: 10, tip: "Warum hängst du? Nutze 10 Min. nur zur Analyse: Was genau verstehst du nicht? Wo liegt das Problem?", color: "text-red-500" }
+    { val: 1, title: "Flow", duration: 60, tip: "Energie und Klarheit sind da? Nutze das Momentum. Fokus an, Störungen aus.", color: "text-teal-400" },
+    { val: 2, title: "Routine", duration: 45, tip: "Aufgabe ist monoton? Nutze Brown Noise zur Stimulation und arbeite sie ab.", color: "text-teal-300" },
+    { val: 3, title: "Unklarheit", duration: 25, tip: "Vorgehen unklar? Skizziere kurz den Weg. Das schafft sofort mentale Ordnung.", color: "text-blue-300" },
+    { val: 5, title: "Widerstand", duration: 15, tip: "Aufgabe wirkt mühsam? Starte einen 15 Min. Sprint. Das ist leicht machbar.", color: "text-yellow-300" },
+    { val: 8, title: "Perfektionismus", duration: 10, tip: "Anspruch zu hoch? Erstelle bewusst einen rohen Entwurf. Qualität folgt später.", color: "text-orange-300" },
+    { val: 13, title: "Diagnose", duration: 5, tip: "Start fällt schwer? Prüfe 10 Min.: Fehlen Infos oder ist das Ziel unklar?", color: "text-red-300" },
+    { val: 21, title: "Mini-Start", duration: 5, tip: "Hürde wirkt zu groß? Mach nur den absolut ersten, kleinsten Schritt.", color: "text-red-500" },
+    { val: 34, title: "Reset", duration: 2, tip: "Mentale Blockade? Steh auf und beweg dich kurz. Aktiviere neue Energie..", color: "text-red-700" }
 ];
 
 // ==========================================
@@ -137,6 +138,13 @@ function getAdaptiveTuneConfig() {
             m: "<b>Micro-Menge:</b> 1 einziger Gedanke / Satz.", 
             v: "<b>Aktiv-Verb:</b> Aufschreiben (nicht 'grübeln').", 
             p: "<b>Präzision:</b> Ein Zettel / Post-It." 
+        };
+    } else if (comp >= 34) { // Paralyse 
+        config.example = "\"5 Min. (M) Datei öffnen + 1 Satz (P) tippen (V)\"";
+        config.mvp = {
+            m: "<b>Micro-Menge:</b> Winziges Zeitfenster (5 Min).",
+            v: "<b>Aktiv-Verb:</b> Öffnen + Tippen (mehr nicht).",
+            p: "<b>Präzision:</b> Ein leeres Dokument."
         };
     }
     return config;
@@ -351,6 +359,7 @@ function renderCheckIn() {
                         <span data-idx="4" class="cursor-pointer hover:text-teal-400 transition w-6 text-center">8</span>
                         <span data-idx="5" class="cursor-pointer hover:text-teal-400 transition w-6 text-center">13</span>
                         <span data-idx="6" class="cursor-pointer hover:text-teal-400 transition w-6 text-center">21</span>
+                        <span data-idx="7" class="cursor-pointer hover:text-teal-400 transition w-6 text-center">34</span>
                     </div>
                 </div>
             </div>
